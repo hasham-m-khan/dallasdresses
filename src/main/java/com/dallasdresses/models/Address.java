@@ -3,6 +3,7 @@ package com.dallasdresses.models;
 import com.dallasdresses.models.Enums.AddressType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -41,6 +42,7 @@ public class Address {
     private String country;
 
     @NotBlank
+    @Size(min = 5, max = 10)
     private String postalCode;
 
     @CreationTimestamp
