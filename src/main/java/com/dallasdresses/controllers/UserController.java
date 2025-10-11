@@ -38,7 +38,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<List<User>> getUserById(@PathVariable Long id) {
+    public ApiResponse<List<User>> getUserById(@Valid @PathVariable Long id) {
         log.info("🧲 Fetching user with id: {}", id);
 
         Map<String, Object> metadata = new HashMap<>();
@@ -55,7 +55,7 @@ public class UserController {
     }
 
     @GetMapping("/search")
-    public ApiResponse<List<User>> getUserByEmail(@RequestParam String email) {
+    public ApiResponse<List<User>> getUserByEmail(@Valid @RequestParam String email) {
         log.info("🧲 Fetching user with email: {}", email);
 
         Map<String, Object> metadata = new HashMap<>();
@@ -88,13 +88,28 @@ public class UserController {
                 .build();
     }
 
-    @PostMapping("/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User user) {
-        return this.userService.updateUser(user);
+    @PutMapping("/{id}")
+    public ApiResponse<User> updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
+        log.info("🔔 Updating user with id: {}", id);
+
+        User updatedUser = userService.updateUser(user);
+
+        log.info("🧶 User with id '{}' updated: {}", id, updatedUser);
+
+        return ApiResponse.<User>builder()
+                .success(true)
+                .data(updatedUser)
+                .metadata(null)
+                .message("Users updated successfully")
+                .build();
     }
 
     @DeleteMapping("/{id}")
     public void deleteUser(@PathVariable Long id) {
+        log.info("🔔 Deleting user with id: {}", id);
+
         this.userService.deleteUser(id);
+
+        log.info("🧶 User with id '{}' deleted", id);
     }
 }
