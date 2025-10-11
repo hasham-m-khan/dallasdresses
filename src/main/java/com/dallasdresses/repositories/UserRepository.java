@@ -1,7 +1,10 @@
 package com.dallasdresses.repositories;
 
-import com.dallasdresses.models.User;
+import com.dallasdresses.entities.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.Optional;
+
 public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findUserByEmail(String email);
 }
