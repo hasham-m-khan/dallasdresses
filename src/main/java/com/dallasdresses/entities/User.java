@@ -29,6 +29,7 @@ public class User {
     private String email;
 
     @NotNull
+    @Enumerated(EnumType.STRING)
     private UserRole role;
 
     @NotBlank
