@@ -1,5 +1,6 @@
 package com.dallasdresses.advices;
 
+import com.dallasdresses.exceptions.users.DuplicateUserException;
 import com.dallasdresses.exceptions.users.UserCreationException;
 import com.dallasdresses.exceptions.users.UserNotFoundException;
 import com.dallasdresses.models.response.ApiResponse;
@@ -37,12 +38,29 @@ public class UserExceptionHandler {
             UserCreationException ex,
             HttpServletRequest request) {
 
-        log.error("🥊 Error creating user" + ex.getMessage());
+        log.error("🥊 Error creating user: " + ex.getMessage());
 
         return new ErrorResponse(
                 ex.getMessage(),
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Error creating User. Please ensure the object has all required fields.",
+                request,
+                null,
+                false)
+                .createResponse();
+    }
+
+    @ExceptionHandler({DuplicateUserException.class})
+    public ResponseEntity<ApiResponse<Object>> handleDuplicateUserException(
+            DuplicateUserException ex,
+            HttpServletRequest request) {
+
+        log.error("🥊 Error creating user: " + ex.getMessage());
+
+        return new ErrorResponse(
+                ex.getMessage(),
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "Error creating User. User with the updated email already exists.",
                 request,
                 null,
                 false)
