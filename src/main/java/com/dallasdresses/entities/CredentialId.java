@@ -1,7 +1,6 @@
-package com.dallasdresses.models;
+package com.dallasdresses.entities;
 
-import com.dallasdresses.models.Enums.ProviderId;
-import jakarta.persistence.Column;
+import com.dallasdresses.entities.enums.enums.ProviderId;
 import jakarta.persistence.Embeddable;
 import lombok.Data;
 

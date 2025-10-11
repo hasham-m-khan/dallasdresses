@@ -1,4 +1,4 @@
-package com.dallasdresses.models;
+package com.dallasdresses.entities;
 
 import jakarta.persistence.Embeddable;
 import lombok.Data;

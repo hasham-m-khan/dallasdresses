@@ -1,6 +1,6 @@
-package com.dallasdresses.models;
+package com.dallasdresses.entities;
 
-import com.dallasdresses.models.Enums.Hasher;
+import com.dallasdresses.entities.enums.enums.Hasher;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;

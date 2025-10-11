@@ -1,4 +1,4 @@
-package com.dallasdresses.models;
+package com.dallasdresses.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
@@ -9,16 +9,18 @@ import java.util.Set;
 
 @Data
 @Entity
-public class Cart {
+public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotBlank
-    @ManyToOne
-    private User user;
+    private String name;
 
-    @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<CartItem> items = new HashSet<>();
+    @NotBlank
+    private String slug;
+
+    @ManyToMany(mappedBy = "categories")
+    private Set<Item> items = new HashSet<>();
 }

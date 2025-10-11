@@ -1,4 +1,4 @@
-package com.dallasdresses.models;
+package com.dallasdresses.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.*;

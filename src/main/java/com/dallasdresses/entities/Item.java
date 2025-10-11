@@ -1,6 +1,6 @@
-package com.dallasdresses.models;
+package com.dallasdresses.entities;
 
-import com.dallasdresses.models.Enums.DiscountType;
+import com.dallasdresses.entities.enums.enums.DiscountType;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;

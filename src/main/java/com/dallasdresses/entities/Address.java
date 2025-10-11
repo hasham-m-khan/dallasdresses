@@ -1,6 +1,6 @@
-package com.dallasdresses.models;
+package com.dallasdresses.entities;
 
-import com.dallasdresses.models.Enums.AddressType;
+import com.dallasdresses.entities.enums.enums.AddressType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

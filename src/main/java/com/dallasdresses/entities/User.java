@@ -1,9 +1,11 @@
-package com.dallasdresses.models;
+package com.dallasdresses.entities;
 
-import com.dallasdresses.models.Enums.UserRole;
+import com.dallasdresses.entities.enums.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -26,14 +28,15 @@ public class User {
     @NotBlank
     private String email;
 
-    @NotBlank
+    @NotNull
     private UserRole role;
 
     @NotBlank
+    @Size(min = 2, max = 2)
     private String locale;
 
-    @NotBlank
-    private boolean emailVerified;
+    @NotNull
+    private Boolean emailVerified;
 
     private String firstName;
     private String lastName;
