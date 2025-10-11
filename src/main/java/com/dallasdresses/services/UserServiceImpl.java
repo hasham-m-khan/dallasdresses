@@ -1,6 +1,7 @@
 package com.dallasdresses.services;
 
 import com.dallasdresses.entities.User;
+import com.dallasdresses.exceptions.users.DuplicateUserException;
 import com.dallasdresses.exceptions.users.UserCreationException;
 import com.dallasdresses.exceptions.users.UserNotFoundException;
 import com.dallasdresses.repositories.UserRepository;
@@ -8,7 +9,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @Service
@@ -39,13 +39,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public User updateUser(User user) {
-        Optional<User> savedUser = userRepository.findById(user.getId());
+        User existingUser = userRepository.findById(user.getId())
+                .orElseThrow(() -> new UserNotFoundException(user.getId()));
 
-        if (savedUser.isEmpty()) {
-            log.error("User with id {} not found", user.getId());
+        if (!existingUser.getEmail().equals(user.getEmail())) {
+            userRepository.findUserByEmail(user.getEmail())
+                    .ifPresent(u -> {
+                        throw new DuplicateUserException(user.getEmail());
+                    });
         }
 
-        return userRepository.save(user);
+        try {
+            return userRepository.save(user);
+        } catch (Exception ex) {
+            throw new UserCreationException("Failed to update user with id " + user.getId(), ex);
+        }
     }
 
     @Override
@@ -67,7 +75,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public void deleteUser(Long id) {
-        log.info("Deleting user {}", id);
+        if (!userRepository.existsById(id)) {
+            throw new UserNotFoundException(id);
+        }
 
         userRepository.deleteById(id);
     }
