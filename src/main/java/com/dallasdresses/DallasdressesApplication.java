@@ -12,21 +12,4 @@ public class DallasdressesApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(DallasdressesApplication.class, args);
 	}
-
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/h2-console/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/h2-console/**")
-                )
-                .headers(headers -> headers
-                        .frameOptions(frame -> frame.disable())
-                );
-
-        return http.build();
-    }
 }
