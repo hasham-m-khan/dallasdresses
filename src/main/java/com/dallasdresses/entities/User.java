@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.validator.constraints.URL;
@@ -18,6 +20,7 @@ import java.util.Set;
 @Data
 @Entity
 @Table(name = "users")
+@EqualsAndHashCode(exclude = {"addresses", "credentials"})
 public class User {
 
     @Id
@@ -46,6 +49,7 @@ public class User {
     @URL
     private String avatar;
 
+    @ToString.Exclude
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
     private Set<Address> addresses = new HashSet<>();
 
