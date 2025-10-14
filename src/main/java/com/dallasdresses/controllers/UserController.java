@@ -1,5 +1,6 @@
 package com.dallasdresses.controllers;
 
+import com.dallasdresses.dtos.UserDto;
 import com.dallasdresses.entities.User;
 import com.dallasdresses.models.response.ApiResponse;
 import com.dallasdresses.services.UserService;
@@ -21,68 +22,70 @@ public class UserController {
     }
 
     @GetMapping("")
-    public ApiResponse<List<User>> getAllUsers() {
+    public ApiResponse<List<UserDto>> getAllUsers() {
         log.info("🧲 Fetching all users");
 
-        Map<String, Object> metadata = new HashMap<>();
-        List<User> users = userService.getAllUsers();
-        metadata.put("filtered", false);
-        metadata.put("totalCount", users.size());
+        List<UserDto> userDtos = userService.getAllUsers();
 
-        return ApiResponse.<List<User>>builder()
+        Map<String, Object> metadata = new HashMap<>();
+        metadata.put("filtered", false);
+        metadata.put("totalCount", userDtos.size());
+
+        return ApiResponse.<List<UserDto>>builder()
                 .success(true)
-                .data(users)
+                .data(userDtos)
                 .metadata(metadata)
                 .message("Users retrieved successfully")
                 .build();
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<List<User>> getUserById(@Valid @PathVariable Long id) {
+    public ApiResponse<UserDto> getUserById(@Valid @PathVariable Long id) {
         log.info("🧲 Fetching user with id: {}", id);
 
         Map<String, Object> metadata = new HashMap<>();
-        List<User> users = List.of(userService.findUserById(id));
+        UserDto userDto = userService.findUserById(id);
         metadata.put("filtered", true);
         metadata.put("filterType", "id");
 
-        return ApiResponse.<List<User>>builder()
+        return ApiResponse.<UserDto>builder()
                 .success(true)
-                .data(users)
+                .data(userDto)
                 .metadata(metadata)
                 .message("Users retrieved successfully")
                 .build();
     }
 
     @GetMapping("/search")
-    public ApiResponse<List<User>> getUserByEmail(@Valid @RequestParam String email) {
+    public ApiResponse<UserDto> getUserByEmail(@Valid @RequestParam String email) {
         log.info("🧲 Fetching user with email: {}", email);
 
+        UserDto userDto = userService.findUserByEmail(email);
+
         Map<String, Object> metadata = new HashMap<>();
-        List<User> users = List.of(userService.findUserByEmail(email));
         metadata.put("filtered", true);
         metadata.put("filterType", "email");
 
-        return ApiResponse.<List<User>>builder()
+        return ApiResponse.<UserDto>builder()
                 .success(true)
-                .data(users)
+                .data(userDto)
                 .metadata(metadata)
                 .message("Users retrieved successfully")
                 .build();
     }
 
     @PostMapping({"", "/"})
-    public ApiResponse<User> createUser(@Valid @RequestBody User user) {
+    public ApiResponse<UserDto> createUser(@Valid @RequestBody User user) {
         log.info("🔔 Creating new user: {}", user);
 
         Map<String, Object> metadata = new HashMap<>();
-        User savedUser = userService.createUser(user);
+        UserDto userDto = userService.createUser(user);
 
-        log.info("🧶 Created user: {}", savedUser);
+        log.info("🧶 Created user: {}", userDto);
 
-        return ApiResponse.<User>builder()
+        return ApiResponse.<UserDto>builder()
                 .success(true)
-                .data(user)
+                .data(userDto)
                 .metadata(metadata)
                 .message("User created successfully")
                 .build();

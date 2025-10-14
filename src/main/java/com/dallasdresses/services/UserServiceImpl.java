@@ -1,5 +1,7 @@
 package com.dallasdresses.services;
 
+import com.dallasdresses.converters.UserToUserDtoConverter;
+import com.dallasdresses.dtos.UserDto;
 import com.dallasdresses.entities.User;
 import com.dallasdresses.exceptions.users.DuplicateUserException;
 import com.dallasdresses.exceptions.users.UserCreationException;
@@ -7,33 +9,43 @@ import com.dallasdresses.exceptions.users.UserNotFoundException;
 import com.dallasdresses.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserToUserDtoConverter userDtoConverter;
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository,
+                           UserToUserDtoConverter userDtoConverter) {
         this.userRepository = userRepository;
+        this.userDtoConverter = userDtoConverter;
     }
 
     @Override
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
+    public List<UserDto> getAllUsers() {
+        return userRepository.findAll().stream()
+                .map(userDtoConverter::convert)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public User findUserById(Long id) {
+    public UserDto findUserById(Long id) {
         return  userRepository.findById(id)
+                .map(userDtoConverter::convert)
                 .orElseThrow(() -> new UserNotFoundException(id));
     }
 
     @Override
-    public User findUserByEmail(String email) {
+    public UserDto findUserByEmail(String email) {
         return  userRepository.findUserByEmail(email)
+                .map(userDtoConverter::convert)
                 .orElseThrow(() -> new UserNotFoundException("email", email));
     }
 
@@ -57,7 +69,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User createUser(User user) {
+    public UserDto createUser(User user) {
 
         if (userRepository.findUserByEmail(user.getEmail()).isPresent()) {
             log.error("User with email '{}' already exists", user.getEmail());
@@ -66,11 +78,10 @@ public class UserServiceImpl implements UserService {
         }
 
         try {
-            User savedUser = userRepository.save(user);
+            return userDtoConverter.convert(userRepository.save(user));
         } catch (Exception e) {
             throw new UserCreationException("User creation failed");
         }
-        return user;
     }
 
     @Override
