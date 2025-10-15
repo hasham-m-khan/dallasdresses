@@ -1,11 +1,14 @@
 package com.dallasdresses.converters;
 
+import com.dallasdresses.dtos.AddressDto;
 import com.dallasdresses.dtos.UserDto;
 import com.dallasdresses.entities.User;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class UserToUserDtoConverter implements Converter<User, UserDto> {
@@ -23,7 +26,14 @@ public class UserToUserDtoConverter implements Converter<User, UserDto> {
             return null;
         }
 
-        UserDto userDto = UserDto.builder()
+        Set<AddressDto> addresses = new HashSet<>();
+        if (!user.getAddresses().isEmpty() && user.getAddresses() != null) {
+            addresses = user.getAddresses().stream()
+                    .map(addressDtoConverter::convert)
+                    .collect(Collectors.toSet());
+        }
+
+        return UserDto.builder()
                 .id(user.getId())
                 .email(user.getEmail())
                 .role(user.getRole())
@@ -35,19 +45,7 @@ public class UserToUserDtoConverter implements Converter<User, UserDto> {
                 .avatar(user.getAvatar())
                 .createdAt(user.getCreatedAt())
                 .updatedAt(user.getUpdatedAt())
-                .addresses(new HashSet<>())
+                .addresses(addresses)
                 .build();
-
-        if (user.getAddresses() != null && !user.getAddresses().isEmpty()) {
-            user.getAddresses().forEach(address ->
-                    userDto.getAddresses().add(addressDtoConverter.convert(address)));
-        }
-
-        userDto.setCredentialCount(0);
-        if (user.getCredentials() != null) {
-            userDto.setCredentialCount(user.getCredentials().size());
-        }
-
-        return userDto;
     }
 }

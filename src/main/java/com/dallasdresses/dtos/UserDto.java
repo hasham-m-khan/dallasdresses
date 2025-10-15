@@ -29,5 +29,4 @@ public class UserDto {
     private Timestamp updatedAt;
 
     private Set<AddressDto> addresses =  new HashSet<>();
-    private Integer credentialCount;
 }

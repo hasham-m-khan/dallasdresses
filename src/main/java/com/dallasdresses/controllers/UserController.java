@@ -44,9 +44,10 @@ public class UserController {
         log.info("🧲 Fetching user with id: {}", id);
 
         Map<String, Object> metadata = new HashMap<>();
-        UserDto userDto = userService.findUserById(id);
+        UserDto userDto = userService.getUserById(id);
         metadata.put("filtered", true);
         metadata.put("filterType", "id");
+        metadata.put("addressCount", userDto.getAddresses().size());
 
         return ApiResponse.<UserDto>builder()
                 .success(true)
@@ -60,7 +61,7 @@ public class UserController {
     public ApiResponse<UserDto> getUserByEmail(@Valid @RequestParam String email) {
         log.info("🧲 Fetching user with email: {}", email);
 
-        UserDto userDto = userService.findUserByEmail(email);
+        UserDto userDto = userService.getUserByEmail(email);
 
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("filtered", true);

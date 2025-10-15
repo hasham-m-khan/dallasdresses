@@ -1,17 +1,19 @@
 package com.dallasdresses.services;
 
+import com.dallasdresses.converters.AddressToAddressDtoConverter;
 import com.dallasdresses.converters.UserToUserDtoConverter;
 import com.dallasdresses.dtos.UserDto;
 import com.dallasdresses.entities.User;
 import com.dallasdresses.exceptions.users.DuplicateUserException;
 import com.dallasdresses.exceptions.users.UserCreationException;
 import com.dallasdresses.exceptions.users.UserNotFoundException;
+import com.dallasdresses.repositories.AddressRepository;
 import com.dallasdresses.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -23,30 +25,34 @@ public class UserServiceImpl implements UserService {
     private final UserToUserDtoConverter userDtoConverter;
 
     public UserServiceImpl(UserRepository userRepository,
-                           UserToUserDtoConverter userDtoConverter) {
+                           AddressRepository addressRepository,
+                           UserToUserDtoConverter userDtoConverter,
+                           AddressToAddressDtoConverter addressDtoConverter) {
         this.userRepository = userRepository;
         this.userDtoConverter = userDtoConverter;
     }
 
     @Override
     public List<UserDto> getAllUsers() {
-        return userRepository.findAll().stream()
+        return userRepository.findAllWithAddresses().stream()
                 .map(userDtoConverter::convert)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public UserDto findUserById(Long id) {
-        return  userRepository.findById(id)
-                .map(userDtoConverter::convert)
-                .orElseThrow(() -> new UserNotFoundException(id));
+    public UserDto getUserById(Long id) {
+        User user = userRepository.findByIdWithAddresses(id)
+                .orElseThrow(() -> new UserNotFoundException((id)));
+
+        return userDtoConverter.convert(user);
     }
 
     @Override
-    public UserDto findUserByEmail(String email) {
-        return  userRepository.findUserByEmail(email)
-                .map(userDtoConverter::convert)
-                .orElseThrow(() -> new UserNotFoundException("email", email));
+    public UserDto getUserByEmail(String email) {
+        User user = userRepository.findByEmailWithAddresses(email)
+                .orElseThrow(() -> new UserNotFoundException((email)));
+
+        return  userDtoConverter.convert(user);
     }
 
     @Override
