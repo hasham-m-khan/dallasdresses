@@ -93,14 +93,14 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<User> updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
+    public ApiResponse<UserDto> updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
         log.info("🔔 Updating user with id: {}", id);
 
-        User updatedUser = userService.updateUser(user);
+        UserDto updatedUser = userService.updateUser(user);
 
         log.info("🧶 User with id '{}' updated: {}", id, updatedUser);
 
-        return ApiResponse.<User>builder()
+        return ApiResponse.<UserDto>builder()
                 .success(true)
                 .data(updatedUser)
                 .metadata(null)
