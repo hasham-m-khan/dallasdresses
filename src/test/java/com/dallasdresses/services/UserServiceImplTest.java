@@ -256,11 +256,11 @@ class UserServiceImplTest {
         user.setId(1L);
         user.setEmail("abc@xyz.com");
 
-        // Act
+        // Act & Assert
         when(userRepository.findUserByEmail(anyString())).thenReturn(Optional.of(user));
 
-        // Assert
         assertThrows(DuplicateUserException.class, () -> userService.createUser(user));
+
         verify(userRepository, times(1)).findUserByEmail(anyString());
         verify(userRepository, never()).save(any(User.class));
         verify(userDtoConverter, never()).convert(any(User.class));
@@ -274,14 +274,41 @@ class UserServiceImplTest {
         user.setId(1L);
         user.setEmail("abc@xyz.com");
 
-        // Act
+        // Act & Assert
         when(userRepository.findUserByEmail(anyString())).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("some exception"));
 
-        // Assert
         assertThrows(UserCreationException.class, () -> userService.createUser(user));
+
         verify(userRepository, times(1)).findUserByEmail(anyString());
         verify(userRepository, times(1)).save(any(User.class));
         verify(userDtoConverter, never()).convert(any(User.class));
+    }
+
+    @Test
+    @DisplayName("deleteUser - Should return void")
+    void testDeleteUser_ShouldDeleteUser_WhenNoErrors() {
+        // Arrange
+        when(userRepository.existsById(anyLong())).thenReturn(true);
+
+        // Act
+        userService.deleteUser(1L);
+
+        // Assert
+        verify(userRepository, times(1)).existsById(1L);
+        verify(userRepository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("deleteUser - Should throw UserNotFoundException")
+    void testDeleteUser_ShouldThrowUserNotFoundException_WhenUserNotFound() {
+        // Arrange
+        when(userRepository.existsById(anyLong())).thenReturn(false);
+
+        // Act & Assert
+        assertThrows(UserNotFoundException.class, () -> userService.deleteUser(1L));
+
+        verify(userRepository, times(1)).existsById(1L);
+        verify(userRepository, never()).deleteById(1L);
     }
 }
