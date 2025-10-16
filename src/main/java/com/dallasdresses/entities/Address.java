@@ -1,10 +1,12 @@
 package com.dallasdresses.entities;
 
 import com.dallasdresses.entities.enums.enums.AddressType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
@@ -12,24 +14,29 @@ import java.sql.Timestamp;
 
 @Data
 @Entity
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@Table(name = "addresses")
 public class Address {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank
+    @NotNull
     @ManyToOne(optional = false)
     @JoinColumn(name = "user_id", nullable = false)
+    @ToString.Exclude
     private User user;
 
-    @NotBlank
+    @NotNull
+    @Enumerated(EnumType.STRING)
     private AddressType addressType;
 
     @NotBlank
     private String addressLine1;
 
-    @NotBlank
     private String addressLine2;
 
     @NotBlank
