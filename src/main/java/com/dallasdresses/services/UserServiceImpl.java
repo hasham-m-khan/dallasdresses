@@ -50,7 +50,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getUserByEmail(String email) {
         User user = userRepository.findByEmailWithAddresses(email)
-                .orElseThrow(() -> new UserNotFoundException((email)));
+                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
 
         return  userDtoConverter.convert(user);
     }
