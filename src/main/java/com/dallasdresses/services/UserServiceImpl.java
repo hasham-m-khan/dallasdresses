@@ -1,13 +1,11 @@
 package com.dallasdresses.services;
 
-import com.dallasdresses.converters.AddressToAddressDtoConverter;
 import com.dallasdresses.converters.UserToUserDtoConverter;
 import com.dallasdresses.dtos.UserDto;
 import com.dallasdresses.entities.User;
 import com.dallasdresses.exceptions.users.DuplicateUserException;
 import com.dallasdresses.exceptions.users.UserCreationException;
 import com.dallasdresses.exceptions.users.UserNotFoundException;
-import com.dallasdresses.repositories.AddressRepository;
 import com.dallasdresses.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -25,9 +23,7 @@ public class UserServiceImpl implements UserService {
     private final UserToUserDtoConverter userDtoConverter;
 
     public UserServiceImpl(UserRepository userRepository,
-                           AddressRepository addressRepository,
-                           UserToUserDtoConverter userDtoConverter,
-                           AddressToAddressDtoConverter addressDtoConverter) {
+                           UserToUserDtoConverter userDtoConverter) {
         this.userRepository = userRepository;
         this.userDtoConverter = userDtoConverter;
     }
@@ -56,7 +52,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User updateUser(User user) {
+    public UserDto updateUser(User user) {
         User existingUser = userRepository.findById(user.getId())
                 .orElseThrow(() -> new UserNotFoundException(user.getId()));
 
@@ -68,7 +64,7 @@ public class UserServiceImpl implements UserService {
         }
 
         try {
-            return userRepository.save(user);
+            return userDtoConverter.convert(userRepository.save(user));
         } catch (Exception ex) {
             throw new UserCreationException("Failed to update user with id " + user.getId(), ex);
         }
@@ -80,7 +76,7 @@ public class UserServiceImpl implements UserService {
         if (userRepository.findUserByEmail(user.getEmail()).isPresent()) {
             log.error("User with email '{}' already exists", user.getEmail());
 
-            throw new UserCreationException("User with email '" + user.getEmail() + "' already exists");
+            throw new DuplicateUserException("User with email '" + user.getEmail() + "' already exists");
         }
 
         try {
