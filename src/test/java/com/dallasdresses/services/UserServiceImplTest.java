@@ -67,11 +67,17 @@ class UserServiceImplTest {
         users.add(user1);
         users.add(user2);
 
+        List<UserDto> userDtos = new ArrayList<>();
+        userDtos.add(userDto1);
+        userDtos.add(userDto2);
+
         // Act
         when(userRepository.findAllWithAddresses()).thenReturn(users);
+        when(userDtoConverter.convert(user1)).thenReturn(userDto1);
+        when(userDtoConverter.convert(user2)).thenReturn(userDto2);
 
         // Assert
-        assertEquals(users.size(), userService.getAllUsers().size());
+        assertEquals(userDtos, userService.getAllUsers());
         verify(userRepository, times(1)).findAllWithAddresses();
     }
 
