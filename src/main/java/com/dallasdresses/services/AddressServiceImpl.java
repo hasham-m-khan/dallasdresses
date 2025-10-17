@@ -1,6 +1,5 @@
 package com.dallasdresses.services;
 
-import com.dallasdresses.converters.AddressDtoToAddressConverter;
 import com.dallasdresses.converters.AddressToAddressDtoConverter;
 import com.dallasdresses.dtos.AddressDto;
 import com.dallasdresses.entities.Address;
@@ -16,6 +15,7 @@ import com.dallasdresses.repositories.AddressRepository;
 import com.dallasdresses.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -28,16 +28,13 @@ public class AddressServiceImpl implements AddressService {
     private final AddressRepository addressRepository;
     private final UserRepository userRepository;
     private final AddressToAddressDtoConverter addressDtoConverter;
-    private final AddressDtoToAddressConverter addressConverter;
 
     public AddressServiceImpl(AddressRepository addressRepository,
                               UserRepository userRepository,
-                              AddressToAddressDtoConverter addressDtoConverter,
-                              AddressDtoToAddressConverter addressConverter) {
+                              AddressToAddressDtoConverter addressDtoConverter) {
         this.addressRepository = addressRepository;
         this.userRepository = userRepository;
         this.addressDtoConverter = addressDtoConverter;
-        this.addressConverter = addressConverter;
     }
 
     public List<AddressDto> getAllAddresses() {
@@ -47,6 +44,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @Transactional
     public List<AddressDto> getAddressByUserId(Long userId) {
 
         userRepository.findById(userId).orElseThrow(
@@ -64,6 +62,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @Transactional
     public AddressDto createAddress(AddressCreateRequest request) {
 
         User user = userRepository.findById(request.getUserId())
@@ -101,6 +100,7 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @Transactional
     public AddressDto updateAddress(AddressUpdateRequest request) {
 
         Address existingAddress = addressRepository.findById(request.getId())
@@ -131,7 +131,18 @@ public class AddressServiceImpl implements AddressService {
     }
 
     @Override
+    @Transactional
     public void deleteAddress(Long addressId) {
 
+        // Future considerations:
+        //  Is this the user's only address?
+        //  Does the user have any pending orders at this address?
+        //  Who should be able to delete?
+
+        if (!addressRepository.existsById(addressId)) {
+            throw new AddressNotFoundException(addressId);
+        }
+
+        addressRepository.deleteById(addressId);
     }
 }
