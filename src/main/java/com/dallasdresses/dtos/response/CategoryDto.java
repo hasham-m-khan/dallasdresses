@@ -1,4 +1,4 @@
-package com.dallasdresses.dtos;
+package com.dallasdresses.dtos.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,8 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CategoryDto {
-
-    Long  id;
+    Long id;
     String name;
     String slug;
 }

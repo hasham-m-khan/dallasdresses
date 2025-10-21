@@ -1,4 +1,4 @@
-package com.dallasdresses.dtos;
+package com.dallasdresses.dtos.response;
 
 import com.dallasdresses.entities.enums.enums.AddressType;
 import lombok.AllArgsConstructor;
