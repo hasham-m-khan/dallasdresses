@@ -99,7 +99,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler({DuplicateEntityException.class})
     public ResponseEntity<ApiResponse<Object>> handleDuplicateEntityException(
-            EntityNotFoundException ex,
+            DuplicateEntityException ex,
             HttpServletRequest request
     ) {
         log.error("🥊 Duplicate entity: {}", ex.getMessage());
@@ -109,8 +109,8 @@ public class GlobalExceptionHandler {
 
         return new ErrorResponse(
                 message,
-                HttpStatus.NOT_FOUND,
-                "Duplicate entity",
+                HttpStatus.BAD_REQUEST,
+                ex.getMessage(),
                 request,
                 null,
                 false)
@@ -129,7 +129,7 @@ public class GlobalExceptionHandler {
 
         return new ErrorResponse(
                 message,
-                HttpStatus.NOT_FOUND,
+                HttpStatus.BAD_REQUEST,
                 "Invalid entity",
                 request,
                 null,
