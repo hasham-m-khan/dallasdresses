@@ -1,4 +1,4 @@
-package com.dallasdresses.models.request;
+package com.dallasdresses.dtos.request;
 
 import com.dallasdresses.entities.enums.enums.AddressType;
 import jakarta.validation.constraints.NotBlank;
