@@ -1,9 +1,11 @@
 package com.dallasdresses.converters;
 
-import com.dallasdresses.dtos.CategoryDto;
+import com.dallasdresses.dtos.response.CategoryDto;
 import com.dallasdresses.entities.Category;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.stereotype.Component;
 
+@Component
 public class CategoryDtoToCategoryConverter implements Converter<CategoryDto, Category> {
 
     @Override
