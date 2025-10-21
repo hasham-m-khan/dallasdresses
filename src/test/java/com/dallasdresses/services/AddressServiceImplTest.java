@@ -5,11 +5,10 @@ import com.dallasdresses.dtos.AddressDto;
 import com.dallasdresses.entities.Address;
 import com.dallasdresses.entities.User;
 import com.dallasdresses.entities.enums.enums.AddressType;
-import com.dallasdresses.exceptions.addresses.AddressCreationException;
-import com.dallasdresses.exceptions.addresses.AddressNotFoundException;
-import com.dallasdresses.exceptions.addresses.AddressUpdateException;
-import com.dallasdresses.exceptions.addresses.DuplicateAddressException;
-import com.dallasdresses.exceptions.users.UserNotFoundException;
+import com.dallasdresses.exceptions.DuplicateEntityException;
+import com.dallasdresses.exceptions.EntityNotFoundException;
+import com.dallasdresses.exceptions.EntityUpdateException;
+import com.dallasdresses.exceptions.InvalidEntityException;
 import com.dallasdresses.models.request.AddressCreateRequest;
 import com.dallasdresses.models.request.AddressUpdateRequest;
 import com.dallasdresses.repositories.AddressRepository;
@@ -141,21 +140,21 @@ class AddressServiceImplTest {
     }
 
     @Test
-    @DisplayName("getAddressByUserId - Should throw UserNotFoundException")
+    @DisplayName("getAddressByUserId - Should throw EntityNotFoundException")
     void testGetAddressByUserId_ShouldThrowUserNotFoundException_WhenUserNotFound() {
         // Arrange & Act
         when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         // Assert
-        assertThrows(UserNotFoundException.class, () -> addressService.getAddressByUserId(anyLong()));
+        assertThrows(EntityNotFoundException.class, () -> addressService.getAddressByUserId(anyLong()));
         verify(userRepository, times(1)).findById(anyLong());
         verify(addressRepository, never()).findByUserId(anyLong());
         verify(addressDtoConverter, never()).convert(any(Address.class));
     }
 
     @Test
-    @DisplayName("getAddressByUserId - Should throw AddressNotFoundException")
-    void testGetAddressByUserId_ShouldThrowAddressNotFoundException_WhenAddressNotFound() {
+    @DisplayName("getAddressByUserId - Should throw EntityNotFoundException")
+    void testGetAddressByUserId_ShouldThrowEntityNotFoundException_WhenAddressNotFound() {
         // Arrange
         User user = new User();
         user.setId(3L);
@@ -167,7 +166,7 @@ class AddressServiceImplTest {
         when(addressRepository.findByUserId(anyLong())).thenReturn(addresses);
 
         // Assert
-        assertThrows(AddressNotFoundException.class, () -> addressService.getAddressByUserId(user.getId()));
+        assertThrows(EntityNotFoundException.class, () -> addressService.getAddressByUserId(user.getId()));
         verify(userRepository, times(1)).findById(anyLong());
         verify(addressRepository, times(1)).findByUserId(anyLong());
         verify(addressDtoConverter, never()).convert(any(Address.class));
@@ -196,13 +195,13 @@ class AddressServiceImplTest {
     }
 
     @Test
-    @DisplayName("createAddress - Should throw UserNotFoundException")
-    void testCreateAddress_ShouldThrowUserNotFoundException_WhenUserNotFound() {
+    @DisplayName("createAddress - Should throw EntityNotFoundException")
+    void testCreateAddress_ShouldThrowEntityNotFoundException_WhenUserNotFound() {
         // Arrange & Act
         when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         // Assert
-        assertThrows(UserNotFoundException.class, () -> addressService.createAddress(cr));
+        assertThrows(EntityNotFoundException.class, () -> addressService.createAddress(cr));
         verify(userRepository, times(1)).findById(anyLong());
         verify(addressRepository, never())
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
@@ -212,8 +211,8 @@ class AddressServiceImplTest {
     }
 
     @Test
-    @DisplayName("createAddress - Should throw DuplicateAddressException")
-    void testCreateAddress_ShouldThrowDuplicateAddressException_WhenDuplicateAddress() {
+    @DisplayName("createAddress - Should throw DuplicateEntityException")
+    void testCreateAddress_ShouldThrowDuplicateEntityException_WhenDuplicateAddress() {
         // Arrange & Act
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         when(addressRepository
@@ -222,7 +221,7 @@ class AddressServiceImplTest {
                 .thenReturn(Optional.of(address1));
 
         // Assert
-        assertThrows(DuplicateAddressException.class, () -> addressService.createAddress(cr));
+        assertThrows(DuplicateEntityException.class, () -> addressService.createAddress(cr));
         verify(userRepository, times(1)).findById(anyLong());
         verify(addressRepository, times(1))
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
@@ -232,8 +231,8 @@ class AddressServiceImplTest {
     }
 
     @Test
-    @DisplayName("createAddress - Should throw AddressCreationException")
-    void testCreateAddress_ShouldThrowAddressCreationException_WhenErrorDuringCreation() {
+    @DisplayName("createAddress - Should throw InvalidEntityException")
+    void testCreateAddress_ShouldThrowInvalidEntityException_WhenErrorDuringCreation() {
         // Arrange & Act
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         when(addressRepository
@@ -243,7 +242,7 @@ class AddressServiceImplTest {
         when(addressRepository.save(any(Address.class))).thenThrow(new RuntimeException());
 
         // Assert
-        assertThrows(AddressCreationException.class, () -> addressService.createAddress(cr));
+        assertThrows(InvalidEntityException.class, () -> addressService.createAddress(cr));
         verify(userRepository, times(1)).findById(anyLong());
         verify(addressRepository, times(1))
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
@@ -292,14 +291,14 @@ class AddressServiceImplTest {
     }
 
     @Test
-    @DisplayName("updateAddress - Should throw AddressNotFoundException")
-    void testUpdateAddress_ShouldThrowAddressNotFoundException_WhenAddressNotFound() {
+    @DisplayName("updateAddress - Should throw EntityNotFoundException")
+    void testUpdateAddress_ShouldThrowEntityNotFoundException_WhenAddressNotFound() {
         // Arrange
         when(addressRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         // Act & Assert
-        AddressNotFoundException exception = assertThrows(
-                AddressNotFoundException.class,
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
                 () -> addressService.updateAddress(ur));
 
         verify(addressRepository, times(1)).findById(anyLong());
@@ -309,15 +308,15 @@ class AddressServiceImplTest {
     }
 
     @Test
-    @DisplayName("updateAddress - Should throw UserNotFoundException")
-    void testUpdateAddress_ShouldThrowUserNotFoundException_WhenUserNotFound() {
+    @DisplayName("updateAddress - Should throw EntityNotFoundException")
+    void testUpdateAddress_ShouldThrowEntityNotFoundException_WhenUserNotFound() {
         // Arrange
         when(addressRepository.findById(anyLong())).thenReturn(Optional.of(address1));
         when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         // Act & Assert
-        UserNotFoundException exception = assertThrows(
-                UserNotFoundException.class,
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
                 () -> addressService.updateAddress(ur));
 
         verify(addressRepository, times(1)).findById(anyLong());
@@ -327,8 +326,8 @@ class AddressServiceImplTest {
     }
 
     @Test
-    @DisplayName("updateAddress - Should throw AddressUpdateException")
-    void testUpdateAddress_ShouldThrowAddressUpdateException_WhenAddressDoesNotBelongToUser() {
+    @DisplayName("updateAddress - Should throw EntityUpdateException")
+    void testUpdateAddress_ShouldThrowEntityUpdateException_WhenAddressDoesNotBelongToUser() {
         // Arrange
         address1.setUser(user);
         User user2 = new User();
@@ -338,8 +337,8 @@ class AddressServiceImplTest {
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user2));
 
         // Act & Assert
-        AddressUpdateException exception = assertThrows(
-                AddressUpdateException.class,
+        EntityUpdateException exception = assertThrows(
+                EntityUpdateException.class,
                 () -> addressService.updateAddress(ur));
 
         verify(addressRepository, times(1)).findById(anyLong());
@@ -349,8 +348,8 @@ class AddressServiceImplTest {
     }
 
     @Test
-    @DisplayName("updateAddress - Should throw AddressUpdateException")
-    void testUpdateAddress_ShouldThrowAddressUpdateException_WhenError() {
+    @DisplayName("updateAddress - Should throw InvalidEntityException")
+    void testUpdateAddress_ShouldThrowInvalidEntityException_WhenError() {
         // Arrange
         address1.setUser(user);
 
@@ -359,8 +358,8 @@ class AddressServiceImplTest {
         when(addressRepository.save(any(Address.class))).thenThrow(new RuntimeException());
 
         // Act & Assert
-        AddressUpdateException exception = assertThrows(
-                AddressUpdateException.class,
+        InvalidEntityException exception = assertThrows(
+                InvalidEntityException.class,
                 () -> addressService.updateAddress(ur));
 
         verify(addressRepository, times(1)).findById(anyLong());
@@ -384,13 +383,13 @@ class AddressServiceImplTest {
     }
 
     @Test
-    @DisplayName("deleteAddress - Should throw AddressNotFoundException")
-    void deleteAddress_ShouldThrowAddressNotFoundException_WhenAddressNotFound() {
+    @DisplayName("deleteAddress - Should throw EntityNotFoundException")
+    void deleteAddress_ShouldThrowEntityNotFoundException_WhenAddressNotFound() {
         // Arrange
         when(addressRepository.existsById(anyLong())).thenReturn(false);
 
         // Act & Assert
-        assertThrows(AddressNotFoundException.class,
+        assertThrows(EntityNotFoundException.class,
                 () -> addressService.deleteAddress(25L));
 
         verify(addressRepository, times(1)).existsById(anyLong());

@@ -4,11 +4,10 @@ import com.dallasdresses.converters.AddressToAddressDtoConverter;
 import com.dallasdresses.dtos.AddressDto;
 import com.dallasdresses.entities.Address;
 import com.dallasdresses.entities.User;
-import com.dallasdresses.exceptions.addresses.AddressCreationException;
-import com.dallasdresses.exceptions.addresses.AddressNotFoundException;
-import com.dallasdresses.exceptions.addresses.AddressUpdateException;
-import com.dallasdresses.exceptions.addresses.DuplicateAddressException;
-import com.dallasdresses.exceptions.users.UserNotFoundException;
+import com.dallasdresses.exceptions.DuplicateEntityException;
+import com.dallasdresses.exceptions.EntityNotFoundException;
+import com.dallasdresses.exceptions.EntityUpdateException;
+import com.dallasdresses.exceptions.InvalidEntityException;
 import com.dallasdresses.models.request.AddressCreateRequest;
 import com.dallasdresses.models.request.AddressUpdateRequest;
 import com.dallasdresses.repositories.AddressRepository;
@@ -48,12 +47,12 @@ public class AddressServiceImpl implements AddressService {
     public List<AddressDto> getAddressByUserId(Long userId) {
 
         userRepository.findById(userId).orElseThrow(
-                () -> new UserNotFoundException("Could not find address with user id: " + userId));
+                () -> new EntityNotFoundException("No addresses found for the user"));
 
         Optional<List<Address>> addresses = addressRepository.findByUserId(userId);
 
         if (addresses.isPresent() && addresses.get().isEmpty()) {
-            throw new AddressNotFoundException("No addresses found for user id: " + userId);
+            throw new EntityNotFoundException("No addresses found for the user");
         }
 
         return addresses.get().stream()
@@ -66,7 +65,7 @@ public class AddressServiceImpl implements AddressService {
     public AddressDto createAddress(AddressCreateRequest request) {
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new UserNotFoundException(request.getUserId()));
+                .orElseThrow(() -> new EntityNotFoundException("user", request.getUserId()));
 
         Optional<Address> existingAddress = addressRepository
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
@@ -78,7 +77,7 @@ public class AddressServiceImpl implements AddressService {
                 );
 
         if (existingAddress.isPresent()) {
-            throw new DuplicateAddressException("Address already exists for this user");
+            throw new DuplicateEntityException("address");
         }
 
         try {
@@ -95,7 +94,7 @@ public class AddressServiceImpl implements AddressService {
             Address savedAddress = addressRepository.save(address);
             return addressDtoConverter.convert(savedAddress);
         } catch (Exception ex) {
-            throw new AddressCreationException(ex.getMessage());
+            throw new InvalidEntityException("Error creating address");
         }
     }
 
@@ -104,13 +103,13 @@ public class AddressServiceImpl implements AddressService {
     public AddressDto updateAddress(AddressUpdateRequest request) {
 
         Address existingAddress = addressRepository.findById(request.getId())
-                .orElseThrow(() -> new AddressNotFoundException(request.getId()));
+                .orElseThrow(() -> new EntityNotFoundException("address", request.getId()));
 
         User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new  UserNotFoundException(request.getUserId()));
+                .orElseThrow(() -> new  EntityNotFoundException("user", request.getUserId()));
 
         if (!existingAddress.getUser().getId().equals(user.getId())) {
-            throw new AddressUpdateException("Address does not belong to user");
+            throw new EntityUpdateException("Address does not belong to user");
         }
 
         try {
@@ -126,7 +125,7 @@ public class AddressServiceImpl implements AddressService {
 
             return addressDtoConverter.convert(savedAddress);
         } catch (Exception ex) {
-            throw new AddressUpdateException();
+            throw new InvalidEntityException("Error updating address");
         }
     }
 
@@ -140,7 +139,7 @@ public class AddressServiceImpl implements AddressService {
         //  Who should be able to delete?
 
         if (!addressRepository.existsById(addressId)) {
-            throw new AddressNotFoundException(addressId);
+            throw new EntityNotFoundException("address", addressId);
         }
 
         addressRepository.deleteById(addressId);

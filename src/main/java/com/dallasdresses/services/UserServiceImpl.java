@@ -3,9 +3,9 @@ package com.dallasdresses.services;
 import com.dallasdresses.converters.UserToUserDtoConverter;
 import com.dallasdresses.dtos.UserDto;
 import com.dallasdresses.entities.User;
-import com.dallasdresses.exceptions.users.DuplicateUserException;
-import com.dallasdresses.exceptions.users.UserCreationException;
-import com.dallasdresses.exceptions.users.UserNotFoundException;
+import com.dallasdresses.exceptions.DuplicateEntityException;
+import com.dallasdresses.exceptions.EntityNotFoundException;
+import com.dallasdresses.exceptions.InvalidEntityException;
 import com.dallasdresses.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -38,7 +38,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getUserById(Long id) {
         User user = userRepository.findByIdWithAddresses(id)
-                .orElseThrow(() -> new UserNotFoundException((id)));
+                .orElseThrow(() -> new EntityNotFoundException("user", id));
 
         return userDtoConverter.convert(user);
     }
@@ -46,7 +46,7 @@ public class UserServiceImpl implements UserService {
     @Override
     public UserDto getUserByEmail(String email) {
         User user = userRepository.findByEmailWithAddresses(email)
-                .orElseThrow(() -> new UserNotFoundException("User not found with email: " + email));
+                .orElseThrow(() -> new EntityNotFoundException("user", "email", email));
 
         return  userDtoConverter.convert(user);
     }
@@ -55,19 +55,19 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public UserDto updateUser(User user) {
         User existingUser = userRepository.findById(user.getId())
-                .orElseThrow(() -> new UserNotFoundException(user.getId()));
+                .orElseThrow(() -> new EntityNotFoundException("user", user.getId()));
 
         if (!existingUser.getEmail().equals(user.getEmail())) {
             userRepository.findUserByEmail(user.getEmail())
                     .ifPresent(u -> {
-                        throw new DuplicateUserException(user.getEmail());
+                        throw new DuplicateEntityException("user", "emai", user.getEmail());
                     });
         }
 
         try {
             return userDtoConverter.convert(userRepository.save(user));
         } catch (Exception ex) {
-            throw new UserCreationException("Failed to update user with id " + user.getId(), ex);
+            throw new InvalidEntityException("Failed to update user with id " + user.getId());
         }
     }
 
@@ -78,13 +78,13 @@ public class UserServiceImpl implements UserService {
         if (userRepository.findUserByEmail(user.getEmail()).isPresent()) {
             log.error("User with email '{}' already exists", user.getEmail());
 
-            throw new DuplicateUserException("User with email '" + user.getEmail() + "' already exists");
+            throw new DuplicateEntityException("user", "email", user.getEmail());
         }
 
         try {
             return userDtoConverter.convert(userRepository.save(user));
         } catch (Exception e) {
-            throw new UserCreationException("User creation failed");
+            throw new InvalidEntityException("User creation failed");
         }
     }
 
@@ -92,7 +92,7 @@ public class UserServiceImpl implements UserService {
     @Transactional
     public void deleteUser(Long id) {
         if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException(id);
+            throw new EntityNotFoundException("user", id);
         }
 
         userRepository.deleteById(id);

@@ -3,9 +3,9 @@ package com.dallasdresses.services;
 import com.dallasdresses.converters.UserToUserDtoConverter;
 import com.dallasdresses.dtos.UserDto;
 import com.dallasdresses.entities.User;
-import com.dallasdresses.exceptions.users.DuplicateUserException;
-import com.dallasdresses.exceptions.users.UserCreationException;
-import com.dallasdresses.exceptions.users.UserNotFoundException;
+import com.dallasdresses.exceptions.DuplicateEntityException;
+import com.dallasdresses.exceptions.EntityNotFoundException;
+import com.dallasdresses.exceptions.InvalidEntityException;
 import com.dallasdresses.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -95,13 +95,13 @@ class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("getUserById - Should throw UserNotFound")
-    void testGetUserById_ShouldThrowUserNotFoundException_WhenUserNotFound() {
+    @DisplayName("getUserById - Should throw EntityNotFoundException")
+    void testGetUserById_ShouldThrowEntityNotFoundException_WhenUserNotFound() {
         // Arrange & Act
         when(userRepository.findByIdWithAddresses(500L)).thenReturn(Optional.empty());
 
         // Assert
-        assertThrows(UserNotFoundException.class, () -> userService.getUserById(500L));
+        assertThrows(EntityNotFoundException.class, () -> userService.getUserById(500L));
         verify(userRepository, times(1)).findByIdWithAddresses(500L);
         verify(userDtoConverter, never()).convert(any(User.class));
     }
@@ -120,13 +120,13 @@ class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("getUserByEmail - Should throw UserNotFound")
-    void testGetUserByEmail_ShouldThrowUserNotFoundException_WhenUserNotFound() {
+    @DisplayName("getUserByEmail - Should throw EntityNotFoundException")
+    void testGetUserByEmail_ShouldThrowEntityNotFoundException_WhenUserNotFound() {
         // Arrange & Act
         when(userRepository.findByEmailWithAddresses(user1.getEmail())).thenReturn(Optional.empty());
 
         // Assert
-        assertThrows(UserNotFoundException.class, () -> userService.getUserByEmail(user1.getEmail()));
+        assertThrows(EntityNotFoundException.class, () -> userService.getUserByEmail(user1.getEmail()));
         verify(userRepository, times(1)).findByEmailWithAddresses(anyString());
         verify(userDtoConverter, never()).convert(any(User.class));
     }
@@ -163,8 +163,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("updateUser - Should update user")
-    void testUpdateUser_ShouldThrowUserNotFoundException_WhenUserNotFound() {
+    @DisplayName("updateUser - Should throw EntityNotFoundException")
+    void testUpdateUser_ShouldThrowEntityNotFoundException_WhenUserNotFound() {
         // Arrange
         User nonexistingUser = new User();
         nonexistingUser.setId(1L);
@@ -174,15 +174,15 @@ class UserServiceImplTest {
         when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         // Assert
-        assertThrows(UserNotFoundException.class, () -> userService.updateUser(nonexistingUser));
+        assertThrows(EntityNotFoundException.class, () -> userService.updateUser(nonexistingUser));
         verify(userRepository, times(1)).findById(anyLong());
         verify(userRepository, never()).findUserByEmail(anyString());
         verify(userDtoConverter, never()).convert(any(User.class));
     }
 
     @Test
-    @DisplayName("updateUser - Should throw DuplicateUserException")
-    void testUpdateUser_ShouldThrowDuplicateUserException_WhenDifferentUserWithSameEmailFound() {
+    @DisplayName("updateUser - Should throw DuplicateEntityException")
+    void testUpdateUser_ShouldThrowDuplicateEntityException_WhenDifferentUserWithSameEmailFound() {
         // Arrange
         String matchingEmail = "abc@xyz.com";
 
@@ -203,15 +203,15 @@ class UserServiceImplTest {
         when(userRepository.findUserByEmail(matchingEmail)).thenReturn(Optional.of(existingUser2));
 
         // Assert
-        assertThrows(DuplicateUserException.class, () -> userService.updateUser(updateUser));
+        assertThrows(DuplicateEntityException.class, () -> userService.updateUser(updateUser));
         verify(userRepository, times(1)).findById(anyLong());
         verify(userRepository, times(1)).findUserByEmail(anyString());
         verify(userDtoConverter, never()).convert(any(User.class));
     }
 
     @Test
-    @DisplayName("updateUser - Should throw UserCreationException")
-    void testUpdateUser_ShouldThrowUserCreationException_WhenUserCreationException() {
+    @DisplayName("updateUser - Should throw InvalidEntityException")
+    void testUpdateUser_ShouldThrowInvalidEntityException_WhenUserCreationException() {
         // Arrange
         User existingUser = new User();
         existingUser.setId(1L);
@@ -223,7 +223,7 @@ class UserServiceImplTest {
         when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("some exception"));
 
         // Assert
-        assertThrows(UserCreationException.class, () -> userService.updateUser(existingUser));
+        assertThrows(InvalidEntityException.class, () -> userService.updateUser(existingUser));
         verify(userRepository, times(1)).findById(anyLong());
         verify(userRepository, never()).findUserByEmail(anyString());
         verify(userRepository,times(1)).save(any(User.class));
@@ -255,8 +255,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("createUser - Should throw DuplicateUserException")
-    void testCreateUser_ShouldThrowUserCreationException_WhenUserExists() {
+    @DisplayName("createUser - Should throw DuplicateEntityException")
+    void testCreateUser_ShouldThrowDuplicateEntityException_WhenUserExists() {
         // Arrange
         User user = new User();
         user.setId(1L);
@@ -265,7 +265,7 @@ class UserServiceImplTest {
         // Act & Assert
         when(userRepository.findUserByEmail(anyString())).thenReturn(Optional.of(user));
 
-        assertThrows(DuplicateUserException.class, () -> userService.createUser(user));
+        assertThrows(DuplicateEntityException.class, () -> userService.createUser(user));
 
         verify(userRepository, times(1)).findUserByEmail(anyString());
         verify(userRepository, never()).save(any(User.class));
@@ -273,8 +273,8 @@ class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("createUser - Should throw UserCreationException")
-    void testCreateUser_ShouldThrowUserCreationException_WhenError() {
+    @DisplayName("createUser - Should throw InvalidEntityException")
+    void testCreateUser_ShouldThrowInvalidEntityException_WhenError() {
         // Arrange
         User user = new User();
         user.setId(1L);
@@ -284,7 +284,7 @@ class UserServiceImplTest {
         when(userRepository.findUserByEmail(anyString())).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("some exception"));
 
-        assertThrows(UserCreationException.class, () -> userService.createUser(user));
+        assertThrows(InvalidEntityException.class, () -> userService.createUser(user));
 
         verify(userRepository, times(1)).findUserByEmail(anyString());
         verify(userRepository, times(1)).save(any(User.class));
@@ -306,13 +306,13 @@ class UserServiceImplTest {
     }
 
     @Test
-    @DisplayName("deleteUser - Should throw UserNotFoundException")
-    void testDeleteUser_ShouldThrowUserNotFoundException_WhenUserNotFound() {
+    @DisplayName("deleteUser - Should throw EntityNotFoundException")
+    void testDeleteUser_ShouldThrowEntityNotFoundException_WhenUserNotFound() {
         // Arrange
         when(userRepository.existsById(anyLong())).thenReturn(false);
 
         // Act & Assert
-        assertThrows(UserNotFoundException.class, () -> userService.deleteUser(1L));
+        assertThrows(EntityNotFoundException.class, () -> userService.deleteUser(1L));
 
         verify(userRepository, times(1)).existsById(1L);
         verify(userRepository, never()).deleteById(1L);
