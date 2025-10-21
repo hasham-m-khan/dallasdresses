@@ -1,6 +1,8 @@
 package com.dallasdresses.advices;
 
+import com.dallasdresses.exceptions.DuplicateEntityException;
 import com.dallasdresses.exceptions.EntityNotFoundException;
+import com.dallasdresses.exceptions.InvalidEntityException;
 import com.dallasdresses.models.response.ApiResponse;
 import com.dallasdresses.models.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -88,7 +90,47 @@ public class GlobalExceptionHandler {
         return new ErrorResponse(
                 message,
                 HttpStatus.NOT_FOUND,
-                "Entity not found",
+                ex.getMessage(),
+                request,
+                null,
+                false)
+                .createResponse();
+    }
+
+    @ExceptionHandler({DuplicateEntityException.class})
+    public ResponseEntity<ApiResponse<Object>> handleDuplicateEntityException(
+            EntityNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        log.error("🥊 Duplicate entity: {}", ex.getMessage());
+
+        String message = "Duplicate entity";
+        List<String> errors = new ArrayList<>();
+
+        return new ErrorResponse(
+                message,
+                HttpStatus.NOT_FOUND,
+                "Duplicate entity",
+                request,
+                null,
+                false)
+                .createResponse();
+    }
+
+    @ExceptionHandler({InvalidEntityException.class})
+    public ResponseEntity<ApiResponse<Object>> handleInvalidEntityException(
+            EntityNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        log.error("🥊 Invalid entity: {}", ex.getMessage());
+
+        String message = "Invalid entity";
+        List<String> errors = new ArrayList<>();
+
+        return new ErrorResponse(
+                message,
+                HttpStatus.NOT_FOUND,
+                "Invalid entity",
                 request,
                 null,
                 false)
