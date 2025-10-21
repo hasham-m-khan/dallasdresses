@@ -1,7 +1,7 @@
 package com.dallasdresses.services;
 
 import com.dallasdresses.converters.UserToUserDtoConverter;
-import com.dallasdresses.dtos.UserDto;
+import com.dallasdresses.dtos.response.UserDto;
 import com.dallasdresses.entities.User;
 import com.dallasdresses.exceptions.DuplicateEntityException;
 import com.dallasdresses.exceptions.EntityNotFoundException;

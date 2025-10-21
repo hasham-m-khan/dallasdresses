@@ -1,6 +1,6 @@
 package com.dallasdresses.converters;
 
-import com.dallasdresses.dtos.AddressDto;
+import com.dallasdresses.dtos.response.AddressDto;
 import com.dallasdresses.entities.Address;
 import com.dallasdresses.entities.User;
 import org.springframework.core.convert.converter.Converter;

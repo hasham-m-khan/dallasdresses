@@ -1,9 +1,9 @@
 package com.dallasdresses.controllers;
 
-import com.dallasdresses.dtos.AddressDto;
-import com.dallasdresses.models.request.AddressCreateRequest;
-import com.dallasdresses.models.request.AddressUpdateRequest;
-import com.dallasdresses.models.response.ApiResponse;
+import com.dallasdresses.dtos.response.AddressDto;
+import com.dallasdresses.dtos.request.AddressCreateRequest;
+import com.dallasdresses.dtos.request.AddressUpdateRequest;
+import com.dallasdresses.dtos.common.ApiResponse;
 import com.dallasdresses.services.AddressService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;

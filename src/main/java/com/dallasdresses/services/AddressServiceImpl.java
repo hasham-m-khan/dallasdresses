@@ -1,15 +1,15 @@
 package com.dallasdresses.services;
 
 import com.dallasdresses.converters.AddressToAddressDtoConverter;
-import com.dallasdresses.dtos.AddressDto;
+import com.dallasdresses.dtos.response.AddressDto;
 import com.dallasdresses.entities.Address;
 import com.dallasdresses.entities.User;
 import com.dallasdresses.exceptions.DuplicateEntityException;
 import com.dallasdresses.exceptions.EntityNotFoundException;
 import com.dallasdresses.exceptions.EntityUpdateException;
 import com.dallasdresses.exceptions.InvalidEntityException;
-import com.dallasdresses.models.request.AddressCreateRequest;
-import com.dallasdresses.models.request.AddressUpdateRequest;
+import com.dallasdresses.dtos.request.AddressCreateRequest;
+import com.dallasdresses.dtos.request.AddressUpdateRequest;
 import com.dallasdresses.repositories.AddressRepository;
 import com.dallasdresses.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;

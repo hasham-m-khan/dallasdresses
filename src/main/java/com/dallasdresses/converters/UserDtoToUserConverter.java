@@ -1,6 +1,6 @@
 package com.dallasdresses.converters;
 
-import com.dallasdresses.dtos.UserDto;
+import com.dallasdresses.dtos.response.UserDto;
 import com.dallasdresses.entities.User;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;

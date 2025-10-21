@@ -1,8 +1,8 @@
 package com.dallasdresses.services;
 
-import com.dallasdresses.dtos.AddressDto;
-import com.dallasdresses.models.request.AddressCreateRequest;
-import com.dallasdresses.models.request.AddressUpdateRequest;
+import com.dallasdresses.dtos.response.AddressDto;
+import com.dallasdresses.dtos.request.AddressCreateRequest;
+import com.dallasdresses.dtos.request.AddressUpdateRequest;
 
 import java.util.List;
 

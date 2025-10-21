@@ -1,8 +1,8 @@
 package com.dallasdresses.controllers;
 
-import com.dallasdresses.dtos.UserDto;
+import com.dallasdresses.dtos.response.UserDto;
 import com.dallasdresses.entities.User;
-import com.dallasdresses.models.response.ApiResponse;
+import com.dallasdresses.dtos.common.ApiResponse;
 import com.dallasdresses.services.UserService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;

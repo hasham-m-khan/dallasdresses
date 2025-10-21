@@ -1,6 +1,6 @@
 package com.dallasdresses.services;
 
-import com.dallasdresses.dtos.UserDto;
+import com.dallasdresses.dtos.response.UserDto;
 import com.dallasdresses.entities.User;
 
 import java.util.List;
