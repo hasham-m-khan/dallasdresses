@@ -1,5 +1,6 @@
 package com.dallasdresses.advices;
 
+import com.dallasdresses.exceptions.EntityNotFoundException;
 import com.dallasdresses.models.response.ApiResponse;
 import com.dallasdresses.models.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
@@ -70,6 +71,26 @@ public class GlobalExceptionHandler {
                 "Invalid request",
                 request,
                 errors.isEmpty() ? null : errors,
+                false)
+                .createResponse();
+    }
+
+    @ExceptionHandler({EntityNotFoundException.class})
+    public ResponseEntity<ApiResponse<Object>> handleEntityNotFoundException(
+            EntityNotFoundException ex,
+            HttpServletRequest request
+    ) {
+        log.error("🥊 Entity not found: {}", ex.getMessage());
+
+        String message = "Entity not found";
+        List<String> errors = new ArrayList<>();
+
+        return new ErrorResponse(
+                message,
+                HttpStatus.NOT_FOUND,
+                "Entity not found",
+                request,
+                null,
                 false)
                 .createResponse();
     }
