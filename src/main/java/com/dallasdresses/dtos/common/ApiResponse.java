@@ -1,4 +1,4 @@
-package com.dallasdresses.models.response;
+package com.dallasdresses.dtos.common;
 
 import lombok.Builder;
 import lombok.Data;

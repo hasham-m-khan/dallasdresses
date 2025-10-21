@@ -1,4 +1,4 @@
-package com.dallasdresses.models.response;
+package com.dallasdresses.dtos.common;
 
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
