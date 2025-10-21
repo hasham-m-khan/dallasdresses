@@ -1,12 +1,13 @@
 package com.dallasdresses.services;
 
-import com.dallasdresses.converters.CategoryDtoToCategoryConverter;
 import com.dallasdresses.converters.CategoryToCategoryDtoConverter;
-import com.dallasdresses.dtos.CategoryDto;
+import com.dallasdresses.dtos.response.CategoryDto;
 import com.dallasdresses.entities.Category;
 import com.dallasdresses.exceptions.DuplicateEntityException;
 import com.dallasdresses.exceptions.EntityNotFoundException;
 import com.dallasdresses.exceptions.InvalidEntityException;
+import com.dallasdresses.dtos.request.CategoryCreateRequest;
+import com.dallasdresses.dtos.request.CategoryUpdateRequest;
 import com.dallasdresses.repositories.CategoryRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,9 +33,6 @@ class CategoryServiceImplTest {
 
     @Mock
     CategoryToCategoryDtoConverter categoryDtoConverter;
-
-    @Mock
-    CategoryDtoToCategoryConverter categoryConverter;
 
     @InjectMocks
     CategoryServiceImpl categoryService;
@@ -181,7 +179,7 @@ class CategoryServiceImplTest {
     @DisplayName("createCategory - Should create category")
     void testCreateCategory_ShouldCreateCategory_WhenNoErrors() {
         // Arrange
-        CategoryDto categoryToSaveDto = CategoryDto.builder()
+        CategoryCreateRequest request = CategoryCreateRequest.builder()
                 .name("Casual").slug("casual").build();
         Category categoryToSave = Category.builder()
                 .name("Casual").slug("casual").build();
@@ -191,54 +189,35 @@ class CategoryServiceImplTest {
                 .id(3L).name("Casual").slug("casual").build();
 
         // Act
-        when(categoryConverter.convert(categoryToSaveDto)).thenReturn(categoryToSave);
-        when(categoryRepository.findByName(anyString())).thenReturn(Optional.empty());
+        when(categoryRepository.existsByNameIgnoreCase(anyString())).thenReturn(false);
         when(categoryRepository.save(categoryToSave)).thenReturn(savedCategory);
         when(categoryDtoConverter.convert(savedCategory)).thenReturn(savedCategoryDto);
 
-        CategoryDto cat1 = categoryService.createCategory(categoryToSaveDto);
+        CategoryDto cat1 = categoryService.createCategory(request);
 
         // Assert
-        assertEquals(categoryToSaveDto.getName(), cat1.getName());
-        assertEquals(categoryToSaveDto.getSlug(), cat1.getSlug());
-        verify(categoryConverter, times(1)).convert(any());
-        verify(categoryRepository, times(1)).findByName(anyString());
+        assertEquals(request.getName(), cat1.getName());
+        assertEquals(request.getSlug(), cat1.getSlug());
+        verify(categoryRepository, times(1)).existsByNameIgnoreCase(anyString());
         verify(categoryRepository,times(1)).save(categoryToSave);
         verify(categoryDtoConverter,times(1)).convert(savedCategory);
-    }
-
-    @Test
-    @DisplayName("createCategory - Should throw InvalidEntityException")
-    void testCreateCategory_ShouldThrowInvalidEntityException_WhenRequestIsNull() {
-        // Arrange
-        CategoryDto request = null;
-
-        // Act & Assert
-        assertThrows(InvalidEntityException.class, () -> categoryService.createCategory(request));
-        verify(categoryConverter, never()).convert(any());
-        verify(categoryRepository, never()).findByName(anyString());
-        verify(categoryRepository,never()).save(any());
-        verify(categoryDtoConverter,never()).convert(any());
     }
 
     @Test
     @DisplayName("createCategory - Should throw DuplicateEntityException")
     void testCreateCategory_ShouldThrowDuplicateEntityException_WhenCategoryExists() {
         // Arrange
-        CategoryDto categoryToSaveDto = CategoryDto.builder()
-                .name("Casual").slug("casual").build();
-        Category savedCategory = Category.builder()
+        CategoryCreateRequest request = CategoryCreateRequest.builder()
                 .name("Casual").slug("casual").build();
 
         // Act & Assert
-        when(categoryRepository.findByName(anyString())).thenReturn(Optional.of(savedCategory));
+        when(categoryRepository.existsByNameIgnoreCase(anyString())).thenReturn(true);
 
         // Assert
         assertThrows (DuplicateEntityException.class,
-                () -> categoryService.createCategory(categoryToSaveDto));
+                () -> categoryService.createCategory(request));
 
-        verify(categoryConverter, never()).convert(any());
-        verify(categoryRepository, times(1)).findByName(anyString());
+        verify(categoryRepository, times(1)).existsByNameIgnoreCase(anyString());
         verify(categoryRepository,never()).save(any());
         verify(categoryDtoConverter,never()).convert(any());
     }
@@ -247,7 +226,7 @@ class CategoryServiceImplTest {
     @DisplayName("createCategory - Should throw InvalidEntityException")
     void testCreateCategory_ShouldThrowInvalidEntityException_WhenError() {
         // Arrange
-        CategoryDto categoryToSaveDto = CategoryDto.builder()
+        CategoryCreateRequest request = CategoryCreateRequest.builder()
                 .name("Casual").slug("casual").build();
         Category categoryToSave = Category.builder()
                 .name("Casual").slug("casual").build();
@@ -255,15 +234,13 @@ class CategoryServiceImplTest {
                 .id(3L).name("Casual").slug("casual").build();
 
         // Act
-        when(categoryConverter.convert(categoryToSaveDto)).thenReturn(categoryToSave);
-        when(categoryRepository.findByName(anyString())).thenReturn(Optional.empty());
+        when(categoryRepository.existsByNameIgnoreCase(anyString())).thenReturn(false);
         when(categoryRepository.save(categoryToSave)).thenThrow(new RuntimeException("some error"));
 
         // Assert
-        assertThrows(InvalidEntityException.class, () -> categoryService.createCategory(categoryToSaveDto));
+        assertThrows(InvalidEntityException.class, () -> categoryService.createCategory(request));
 
-        verify(categoryConverter, times(1)).convert(any());
-        verify(categoryRepository, times(1)).findByName(anyString());
+        verify(categoryRepository, times(1)).existsByNameIgnoreCase(anyString());
         verify(categoryRepository,times(1)).save(categoryToSave);
         verify(categoryDtoConverter, never()).convert(savedCategory);
     }
@@ -272,26 +249,30 @@ class CategoryServiceImplTest {
     @DisplayName("updateCategory - Should update category")
     void testUpdateCategory_ShouldUpdateCategory_WhenNoErrors() {
         // Arrange
-        CategoryDto updatedCategoryDto =  CategoryDto.builder()
-                .id(1L).name("Coats").slug("coats").build();
-        Category updatedCategory =  Category.builder()
-                .id(1L).name("Coats").slug("coats").build();
+        Category existingCategory = Category.builder()
+                .id(1L).name("Jackets").slug("jackets").build();
+        CategoryUpdateRequest request = CategoryUpdateRequest.builder()
+                .id(1L).name("Perfumes").slug("perfumes").build();
+        Category updatedCategory = Category.builder()
+                .id(1L).name("Perfumes").slug("perfumes").build();
+        CategoryDto updatedCategoryDto = CategoryDto.builder()
+                .id(1L).name("Perfumes").slug("perfumes").build();
 
-        when(categoryRepository.findById(any())).thenReturn(Optional.of(category1));
-        when(categoryConverter.convert(any(CategoryDto.class))).thenReturn(updatedCategory);
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(existingCategory));
+        when(categoryRepository.existsByNameIgnoreCase(anyString())).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenReturn(updatedCategory);
         when(categoryDtoConverter.convert(updatedCategory)).thenReturn(updatedCategoryDto);
 
         // Act
-        CategoryDto returnedCategory = categoryService.updateCategory(updatedCategoryDto);
+        CategoryDto returnedCategory = categoryService.updateCategory(request);
 
         // Assert
-        assertEquals(updatedCategoryDto.getName(), returnedCategory.getName());
-        assertEquals(updatedCategoryDto.getSlug(), returnedCategory.getSlug());
-        assertEquals(updatedCategoryDto.getId(), returnedCategory.getId());
+        assertEquals(returnedCategory.getName(), request.getName());
+        assertEquals(returnedCategory.getSlug(), request.getSlug());
+        assertEquals(returnedCategory.getId(), request.getId());
 
-        verify(categoryRepository, times(1)).findById(any());
-        verify(categoryDtoConverter, times(1)).convert(any(Category.class));
+        verify(categoryRepository, times(1)).findById(anyLong());
+        verify(categoryRepository, times(1)).existsByNameIgnoreCase(anyString());
         verify(categoryRepository, times(1)).save(any(Category.class));
         verify(categoryDtoConverter, times(1)).convert(any(Category.class));
     }
@@ -300,38 +281,59 @@ class CategoryServiceImplTest {
     @DisplayName("updateCategory - Should throw EntityNotFoundException")
     void testUpdateCategory_ShouldThrowEntityNotFoundException_WhenCategoryNotFound() {
         // Arrange
-        CategoryDto updatedCategoryDto =  CategoryDto.builder()
-                .id(1L).name("Coats").slug("coats").build();
+        CategoryUpdateRequest request =  CategoryUpdateRequest.builder()
+                .id(1L).name("Perfumes").slug("perfumes").build();
 
-        when(categoryRepository.findById(any())).thenReturn(Optional.empty());
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> categoryService.updateCategory(updatedCategoryDto));
+        assertThrows(EntityNotFoundException.class, () -> categoryService.updateCategory(request));
 
         verify(categoryRepository, times(1)).findById(any());
-        verify(categoryConverter, never()).convert(any(CategoryDto.class));
-        verify(categoryRepository, never()).save(any(Category.class));
+        verify(categoryRepository, never()).existsByNameIgnoreCase(anyString());
         verify(categoryDtoConverter, never()).convert(any(Category.class));
+        verify(categoryRepository, never()).save(any(Category.class));
+    }
+
+    @Test
+    @DisplayName("updateCategory - Should throw DuplicateEntityException")
+    void testUpdateCategory_ShouldThrowDuplicateEntityException_WhenNameExists() {
+        // Arrange
+        Category existingCategory = Category.builder()
+                .id(1L).name("Jackets").slug("jackets").build();
+        CategoryUpdateRequest request = CategoryUpdateRequest.builder()
+                .id(1L).name("Perfumes").slug("perfumes").build();
+
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(existingCategory));
+        when(categoryRepository.existsByNameIgnoreCase(request.getName())).thenReturn(true);
+
+        // Act & Assert
+        assertThrows(DuplicateEntityException.class, () -> categoryService.updateCategory(request));
+
+        verify(categoryRepository, times(1)).findById(any());
+        verify(categoryRepository, times(1)).existsByNameIgnoreCase(anyString());
+        verify(categoryDtoConverter, never()).convert(any(Category.class));
+        verify(categoryRepository, never()).save(any(Category.class));
     }
 
     @Test
     @DisplayName("updateCategory - Should throw InvalidEntityException")
     void testUpdateCategory_ShouldThrowInvalidEntityException_WhenError() {
         // Arrange
-        CategoryDto updatedCategoryDto =  CategoryDto.builder()
-                .id(1L).name("Coats").slug("coats").build();
-        Category updatedCategory =  Category.builder()
-                .id(1L).name("Coats").slug("coats").build();
+        Category existingCategory = Category.builder()
+                .id(1L).name("Jackets").slug("jackets").build();
+        CategoryUpdateRequest request = CategoryUpdateRequest.builder()
+                .id(1L).name("Perfumes").slug("perfumes").build();
 
-        when(categoryRepository.findById(any())).thenReturn(Optional.of(updatedCategory));
-        when(categoryConverter.convert(any(CategoryDto.class))).thenReturn(updatedCategory);
+        when(categoryRepository.findById(anyLong())).thenReturn(Optional.of(existingCategory));
+        when(categoryRepository.existsByNameIgnoreCase(anyString())).thenReturn(false);
         when(categoryRepository.save(any(Category.class))).thenThrow(new RuntimeException("some error"));
 
         // Act & Assert
-        assertThrows(InvalidEntityException.class, () -> categoryService.updateCategory(updatedCategoryDto));
+        assertThrows(InvalidEntityException.class, () -> categoryService.updateCategory(request));
 
-        verify(categoryRepository, times(1)).findById(any());
-        verify(categoryConverter, times(1)).convert(any(CategoryDto.class));
+        verify(categoryRepository, times(1)).findById(anyLong());
+        verify(categoryRepository, times(1)).existsByNameIgnoreCase(anyString());
         verify(categoryRepository, times(1)).save(any(Category.class));
         verify(categoryDtoConverter, never()).convert(any(Category.class));
     }
