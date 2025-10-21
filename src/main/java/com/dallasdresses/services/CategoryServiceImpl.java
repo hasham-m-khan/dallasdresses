@@ -1,30 +1,33 @@
 package com.dallasdresses.services;
 
-import com.dallasdresses.converters.CategoryDtoToCategoryConverter;
 import com.dallasdresses.converters.CategoryToCategoryDtoConverter;
-import com.dallasdresses.dtos.CategoryDto;
+import com.dallasdresses.dtos.response.CategoryDto;
 import com.dallasdresses.entities.Category;
 import com.dallasdresses.exceptions.DuplicateEntityException;
 import com.dallasdresses.exceptions.EntityNotFoundException;
 import com.dallasdresses.exceptions.InvalidEntityException;
+import com.dallasdresses.dtos.request.CategoryCreateRequest;
+import com.dallasdresses.dtos.request.CategoryUpdateRequest;
 import com.dallasdresses.repositories.CategoryRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
+@Service
+@Transactional(readOnly = true)
 public class CategoryServiceImpl implements CategoryService {
 
     private final CategoryRepository categoryRepository;
     private final CategoryToCategoryDtoConverter categoryDtoConverter;
-    private final CategoryDtoToCategoryConverter categoryConverter;
 
     public CategoryServiceImpl(CategoryRepository categoryRepository,
-                               CategoryToCategoryDtoConverter categoryDtoConverter,
-                               CategoryDtoToCategoryConverter categoryConverter) {
+                               CategoryToCategoryDtoConverter categoryDtoConverter) {
         this.categoryRepository = categoryRepository;
         this.categoryDtoConverter = categoryDtoConverter;
-        this.categoryConverter = categoryConverter;
     }
 
     @Override
@@ -58,19 +61,24 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryDto createCategory(CategoryDto categoryDto) {
+    @Transactional
+    public CategoryDto createCategory(CategoryCreateRequest request) {
 
-        if (categoryDto == null) {
-            throw new InvalidEntityException("category request is null");
+        String slug = request.getSlug();
+        if (slug == null || slug.isEmpty()) {
+            slug = generateSlug(request.getName());
         }
 
-        categoryRepository.findByName(categoryDto.getName())
-                .ifPresent(category -> {
-                    throw new DuplicateEntityException("category", "name", category.getName());
-                });
+        if (categoryRepository.existsByNameIgnoreCase(request.getName())) {
+            throw new DuplicateEntityException("category", "name", request.getName());
+        }
 
         try {
-            Category category = categoryConverter.convert(categoryDto);
+            Category category = Category.builder()
+                    .name(request.getName())
+                    .slug(slug)
+                    .build();
+
             return categoryDtoConverter.convert(
                     categoryRepository.save(category));
         } catch (Exception ex) {
@@ -79,19 +87,29 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryDto updateCategory(CategoryDto categoryDto) {
+    @Transactional
+    public CategoryDto updateCategory(CategoryUpdateRequest request) {
 
-        if (categoryDto == null) {
-            throw new InvalidEntityException("category request is null");
+        // Check if category exists
+        Category existingCategory = categoryRepository.findById(request.getId())
+                .orElseThrow(() -> new EntityNotFoundException("category", request.getId()));
+
+        String slug = request.getSlug();
+        if (slug == null || slug.isEmpty()) {
+            slug = generateSlug(request.getName());
         }
 
-        categoryRepository.findById(categoryDto.getId())
-                .orElseThrow(() -> new EntityNotFoundException("category", categoryDto.getId()));
+        // Check if the updated category name already exists in DB
+        if (categoryRepository.existsByNameIgnoreCase(request.getName())) {
+            throw new DuplicateEntityException("category", "name", request.getName());
+        }
 
         try {
-            Category  category = categoryConverter.convert(categoryDto);
+            existingCategory.setName(request.getName());
+            existingCategory.setSlug(slug);
+
             return categoryDtoConverter.convert(
-                    categoryRepository.save(category)
+                    categoryRepository.save(existingCategory)
             );
         } catch(Exception ex) {
             throw new InvalidEntityException("Error updating category");
@@ -99,18 +117,28 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Transactional
     public void deleteCategory(Long id) {
         categoryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("category", id));
 
         categoryRepository.deleteById(id);
-    };
+    }
 
     @Override
+    @Transactional
     public void deleteCategoryByName(String name) {
         Category category = categoryRepository.findByName(name)
                 .orElseThrow(() -> new EntityNotFoundException("category", "name", name));
 
         categoryRepository.deleteById(category.getId());
+    }
+
+    private String generateSlug(String name) {
+        return name.toLowerCase()
+                .trim()
+                .replaceAll("[^a-z0-9\\s-]", "")
+                .replaceAll("\\s+", "-")
+                .replaceAll("-+", "-");
     }
 }
