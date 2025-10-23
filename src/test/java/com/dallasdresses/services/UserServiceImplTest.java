@@ -1,8 +1,13 @@
 package com.dallasdresses.services;
 
 import com.dallasdresses.converters.UserToUserDtoConverter;
+import com.dallasdresses.dtos.request.AddressEmbedRequest;
+import com.dallasdresses.dtos.request.UserCreateRequest;
+import com.dallasdresses.dtos.request.UserUpdateRequest;
 import com.dallasdresses.dtos.response.UserDto;
 import com.dallasdresses.entities.User;
+import com.dallasdresses.entities.enums.enums.AddressType;
+import com.dallasdresses.entities.enums.enums.UserRole;
 import com.dallasdresses.exceptions.DuplicateEntityException;
 import com.dallasdresses.exceptions.EntityNotFoundException;
 import com.dallasdresses.exceptions.InvalidEntityException;
@@ -16,6 +21,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -135,28 +141,46 @@ class UserServiceImplTest {
     @DisplayName("updateUser - Should update user")
     void testUpdateUser_ShouldUpdateUser_WhenNoErrors() {
         // Arrange
-        User existingUser = new User();
-        existingUser.setId(1L);
-        existingUser.setEmail("abc@xyz.com");
-        existingUser.setFirstName("John");
+        UserUpdateRequest request = UserUpdateRequest.builder()
+                .id(1L)
+                .email("abc@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("fr")
+                .build();
 
-        User updatedUser = new User();
-        updatedUser.setId(1L);
-        updatedUser.setEmail("abc@xyz.com");
-        updatedUser.setFirstName("Jeremy");
+        User existingUser = User.builder()
+                .id(1L)
+                .email("abc@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("en")
+                .build();
 
-        UserDto updatedUserDto = new UserDto();
-        updatedUserDto.setId(1L);
-        updatedUserDto.setEmail("abc@xyz.com");
-        updatedUserDto.setFirstName("Jeremy");
+        User updatedUser = User.builder()
+                .id(1L)
+                .email("abc@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("fr")
+                .build();
 
-        // Act
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
-        when(userRepository.save(updatedUser)).thenReturn(updatedUser);
+        UserDto updatedUserDto = UserDto.builder()
+                .id(1L)
+                .email("abc@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("fr")
+                .build();
+
+        when(userRepository.findById(request.getId())).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(existingUser)).thenReturn(updatedUser);
         when(userDtoConverter.convert(updatedUser)).thenReturn(updatedUserDto);
 
+        // Act
+        UserDto result = userService.updateUser(request);
+
         // Assert
-        assertEquals(updatedUserDto, userService.updateUser(updatedUser));
+        assertEquals(request.getLocale(), result.getLocale());
+        assertEquals(request.getEmail(), result.getEmail());
+        assertEquals(request.getId(), result.getId());
+
         verify(userRepository, times(1)).findById(1L);
         verify(userRepository, times(1)).save(updatedUser);
         verify(userDtoConverter, times(1)).convert(any(User.class));
@@ -166,17 +190,20 @@ class UserServiceImplTest {
     @DisplayName("updateUser - Should throw EntityNotFoundException")
     void testUpdateUser_ShouldThrowEntityNotFoundException_WhenUserNotFound() {
         // Arrange
-        User nonexistingUser = new User();
-        nonexistingUser.setId(1L);
-        nonexistingUser.setEmail("abc@xyz.com");
+        UserUpdateRequest request = UserUpdateRequest.builder()
+                .id(1L)
+                .email("abc@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("fr")
+                .build();
 
-        // Act
-        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+        when(userRepository.findById(1L)).thenReturn(Optional.empty());
 
-        // Assert
-        assertThrows(EntityNotFoundException.class, () -> userService.updateUser(nonexistingUser));
-        verify(userRepository, times(1)).findById(anyLong());
-        verify(userRepository, never()).findUserByEmail(anyString());
+        // Act & Assert
+        assertThrows(EntityNotFoundException.class, () -> userService.updateUser(request));
+
+        verify(userRepository, times(1)).findById(1L);
+        verify(userRepository, never()).save(any(User.class));
         verify(userDtoConverter, never()).convert(any(User.class));
     }
 
@@ -184,28 +211,36 @@ class UserServiceImplTest {
     @DisplayName("updateUser - Should throw DuplicateEntityException")
     void testUpdateUser_ShouldThrowDuplicateEntityException_WhenDifferentUserWithSameEmailFound() {
         // Arrange
-        String matchingEmail = "abc@xyz.com";
+        UserUpdateRequest request = UserUpdateRequest.builder()
+                .id(1L)
+                .email("def@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("fr")
+                .build();
 
-        User updateUser = new User();
-        updateUser.setId(1L);
-        updateUser.setEmail(matchingEmail);
+        User existingUser = User.builder()
+                .id(1L)
+                .email("abc@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("en")
+                .build();
 
-        User existingUser1 = new User();
-        existingUser1.setId(1L);
-        existingUser1.setEmail("def@xyz.com");
+        User diffUserWithSameEmail = User.builder()
+                .id(3L)
+                .email("def@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("en")
+                .build();
 
-        User existingUser2 = new User();
-        existingUser2.setId(2L);
-        existingUser2.setEmail(matchingEmail);
+        when(userRepository.findById(request.getId())).thenReturn(Optional.of(existingUser));
+        when(userRepository.findUserByEmail(request.getEmail()))
+                .thenReturn(Optional.of(diffUserWithSameEmail));
 
-        // Act
-        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser1));
-        when(userRepository.findUserByEmail(matchingEmail)).thenReturn(Optional.of(existingUser2));
-
-        // Assert
-        assertThrows(DuplicateEntityException.class, () -> userService.updateUser(updateUser));
-        verify(userRepository, times(1)).findById(anyLong());
-        verify(userRepository, times(1)).findUserByEmail(anyString());
+        // Act & Assert
+        assertThrows(DuplicateEntityException.class, () -> userService.updateUser(request));
+        verify(userRepository, times(1)).findById(request.getId());
+        verify(userRepository, times(1)).findUserByEmail(request.getEmail());
+        verify(userRepository, never()).save(any(User.class));
         verify(userDtoConverter, never()).convert(any(User.class));
     }
 
@@ -213,42 +248,131 @@ class UserServiceImplTest {
     @DisplayName("updateUser - Should throw InvalidEntityException")
     void testUpdateUser_ShouldThrowInvalidEntityException_WhenUserCreationException() {
         // Arrange
-        User existingUser = new User();
-        existingUser.setId(1L);
-        existingUser.setEmail("abc@xyz.com");
-        existingUser.setFirstName("John");
+        UserUpdateRequest request = UserUpdateRequest.builder()
+                .id(1L)
+                .email("abc@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("fr")
+                .build();
 
-        // Act
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(existingUser));
-        when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("some exception"));
+        User existingUser = User.builder()
+                .id(1L)
+                .email("abc@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("en")
+                .build();
 
-        // Assert
-        assertThrows(InvalidEntityException.class, () -> userService.updateUser(existingUser));
-        verify(userRepository, times(1)).findById(anyLong());
-        verify(userRepository, never()).findUserByEmail(anyString());
-        verify(userRepository,times(1)).save(any(User.class));
+        User updatedUser = User.builder()
+                .id(1L)
+                .email("abc@xyz.com")
+                .role(UserRole.STAFF)
+                .locale("en")
+                .build();
+
+        when(userRepository.findById(1L)).thenReturn(Optional.of(existingUser));
+        when(userRepository.save(updatedUser)).thenThrow(new RuntimeException("some error"));
+
+        // Act & Assert
+        assertThrows(InvalidEntityException.class, () -> userService.updateUser(request));
+
+        verify(userRepository, times(1)).findById(1L);
+        verify(userRepository, times(1)).save(updatedUser);
         verify(userDtoConverter, never()).convert(any(User.class));
     }
 
     @Test
-    @DisplayName("createUser - Should create User")
-    void testCreateUser_ShouldCreateUser_WhenNoErrors() {
+    @DisplayName("createUser - Should create User Without Addresses")
+    void testCreateUser_ShouldCreateUserWithoutAddresses_WhenNoErrors() {
         // Arrange
-        User user = new User();
-        user.setId(1L);
-        user.setEmail("abc@xyz.com");
+        UserCreateRequest request = UserCreateRequest.builder()
+                .role(UserRole.USER)
+                .email("suzanne.hutchkins@xyzmail.com")
+                .locale("en")
+                .build();
 
-        UserDto userDto = new UserDto();
-        userDto.setId(1L);
-        userDto.setEmail("abc@xyz.com");
+        User savedUser = User.builder()
+                .id(5L)
+                .role(UserRole.USER)
+                .email("suzanne.hutchkins@xyzmail.com")
+                .locale("en")
+                .build();
+
+        UserDto userDto = UserDto.builder()
+                .id(5L)
+                .role(UserRole.USER)
+                .email("suzanne.hutchkins@xyzmail.com")
+                .locale("en")
+                .build();
+
 
         // Act
         when(userRepository.findUserByEmail(anyString())).thenReturn(Optional.empty());
-        when(userRepository.save(user)).thenReturn(user);
-        when(userDtoConverter.convert(user)).thenReturn(userDto);
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userDtoConverter.convert(savedUser)).thenReturn(userDto);
+
+        UserDto result = userService.createUser(request);
 
         // Assert
-        assertEquals(userDto, userService.createUser(user));
+        assertEquals(userDto, result);
+        verify(userRepository, times(1)).findUserByEmail(anyString());
+        verify(userRepository, times(1)).save(any(User.class));
+        verify(userDtoConverter, times(1)).convert(any(User.class));
+    }
+
+    @Test
+    @DisplayName("createUser - Should create User With Addresses")
+    void testCreateUser_ShouldCreateUserWithAddresses_WhenNoErrors() {
+        // Arrange
+        AddressEmbedRequest addRequest1 = AddressEmbedRequest.builder()
+                .addressType(AddressType.RESIDENTIAL)
+                .addressLine1("112 Maple ST")
+                .city("Garling")
+                .state("North Dakota")
+                .country("usa")
+                .postalCode("78945")
+                .build();
+
+        AddressEmbedRequest addRequest2 = AddressEmbedRequest.builder()
+                .addressType(AddressType.ALTERNATE)
+                .addressLine1("3009 Jungle Wood DR")
+                .city("Jacksonville")
+                .state("Florida")
+                .country("usa")
+                .postalCode("33456")
+                .build();
+
+        List<AddressEmbedRequest> addRequests = Arrays.asList(addRequest1, addRequest2);
+
+        UserCreateRequest request = UserCreateRequest.builder()
+                .role(UserRole.USER)
+                .email("suzanne.hutchkins@xyzmail.com")
+                .locale("en")
+                .addresses(addRequests)
+                .build();
+
+        User savedUser = User.builder()
+                .id(5L)
+                .role(UserRole.USER)
+                .email("suzanne.hutchkins@xyzmail.com")
+                .locale("en")
+                .build();
+
+        UserDto userDto = UserDto.builder()
+                .id(5L)
+                .role(UserRole.USER)
+                .email("suzanne.hutchkins@xyzmail.com")
+                .locale("en")
+                .build();
+
+        when(userRepository.findUserByEmail(anyString())).thenReturn(Optional.empty());
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userDtoConverter.convert(savedUser)).thenReturn(userDto);
+
+        // Act
+        UserDto result = userService.createUser(request);
+
+        // Assert
+        assertEquals(userDto, result);
         verify(userRepository, times(1)).findUserByEmail(anyString());
         verify(userRepository, times(1)).save(any(User.class));
         verify(userDtoConverter, times(1)).convert(any(User.class));
@@ -258,14 +382,22 @@ class UserServiceImplTest {
     @DisplayName("createUser - Should throw DuplicateEntityException")
     void testCreateUser_ShouldThrowDuplicateEntityException_WhenUserExists() {
         // Arrange
+        UserCreateRequest request = UserCreateRequest.builder()
+                .role(UserRole.USER)
+                .email("suzanne.hutchkins@xyzmail.com")
+                .locale("en")
+                .build();
+
         User user = new User();
         user.setId(1L);
-        user.setEmail("abc@xyz.com");
+        user.setEmail("suzanne.hutchkins@xyzmail.com");
+        user.setLocale("en");
+        user.setRole(UserRole.USER);
 
         // Act & Assert
         when(userRepository.findUserByEmail(anyString())).thenReturn(Optional.of(user));
 
-        assertThrows(DuplicateEntityException.class, () -> userService.createUser(user));
+        assertThrows(DuplicateEntityException.class, () -> userService.createUser(request));
 
         verify(userRepository, times(1)).findUserByEmail(anyString());
         verify(userRepository, never()).save(any(User.class));
@@ -276,15 +408,23 @@ class UserServiceImplTest {
     @DisplayName("createUser - Should throw InvalidEntityException")
     void testCreateUser_ShouldThrowInvalidEntityException_WhenError() {
         // Arrange
+        UserCreateRequest request = UserCreateRequest.builder()
+                .role(UserRole.USER)
+                .email("suzanne.hutchkins@xyzmail.com")
+                .locale("en")
+                .build();
+
         User user = new User();
         user.setId(1L);
-        user.setEmail("abc@xyz.com");
+        user.setEmail("suzanne.hutchkins@xyzmail.com");
+        user.setLocale("en");
+        user.setRole(UserRole.USER);
 
         // Act & Assert
         when(userRepository.findUserByEmail(anyString())).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenThrow(new RuntimeException("some exception"));
 
-        assertThrows(InvalidEntityException.class, () -> userService.createUser(user));
+        assertThrows(InvalidEntityException.class, () -> userService.createUser(request));
 
         verify(userRepository, times(1)).findUserByEmail(anyString());
         verify(userRepository, times(1)).save(any(User.class));

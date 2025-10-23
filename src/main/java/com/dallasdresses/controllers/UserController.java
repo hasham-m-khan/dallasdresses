@@ -1,7 +1,8 @@
 package com.dallasdresses.controllers;
 
+import com.dallasdresses.dtos.request.UserCreateRequest;
+import com.dallasdresses.dtos.request.UserUpdateRequest;
 import com.dallasdresses.dtos.response.UserDto;
-import com.dallasdresses.entities.User;
 import com.dallasdresses.dtos.common.ApiResponse;
 import com.dallasdresses.services.UserService;
 import jakarta.validation.Valid;
@@ -76,11 +77,11 @@ public class UserController {
     }
 
     @PostMapping({"", "/"})
-    public ApiResponse<UserDto> createUser(@Valid @RequestBody User user) {
-        log.info("🔔 Creating new user: {}", user);
+    public ApiResponse<UserDto> createUser(@Valid @RequestBody UserCreateRequest request) {
+        log.info("🔔 Creating new user: {}", request);
 
         Map<String, Object> metadata = new HashMap<>();
-        UserDto userDto = userService.createUser(user);
+        UserDto userDto = userService.createUser(request);
 
         log.info("🧶 Created user: {}", userDto);
 
@@ -93,12 +94,12 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
-    public ApiResponse<UserDto> updateUser(@PathVariable Long id, @Valid @RequestBody User user) {
-        log.info("🔔 Updating user with id: {}", id);
+    public ApiResponse<UserDto> updateUser(@Valid @RequestBody UserUpdateRequest request) {
+        log.info("🔔 Updating user with id: {}", request.getId());
 
-        UserDto updatedUser = userService.updateUser(user);
+        UserDto updatedUser = userService.updateUser(request);
 
-        log.info("🧶 User with id '{}' updated: {}", id, updatedUser);
+        log.info("🧶 User with id '{}' updated: {}", updatedUser.getId(), updatedUser);
 
         return ApiResponse.<UserDto>builder()
                 .success(true)
