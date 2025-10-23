@@ -51,7 +51,8 @@ public class User {
     private String avatar;
 
     @ToString.Exclude
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user")
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "user", orphanRemoval = true)
+    @Builder.Default
     private Set<Address> addresses = new HashSet<>();
 
     @OneToMany(cascade =CascadeType.ALL, mappedBy = "user")
@@ -62,4 +63,9 @@ public class User {
 
     @UpdateTimestamp
     private Timestamp updatedAt;
+
+    public void addAddress(Address address) {
+        this.addresses.add(address);
+        address.setUser(this);
+    }
 }
