@@ -3,7 +3,6 @@ package com.dallasdresses.services;
 import com.dallasdresses.dtos.request.UserCreateRequest;
 import com.dallasdresses.dtos.request.UserUpdateRequest;
 import com.dallasdresses.dtos.response.UserDto;
-import com.dallasdresses.entities.User;
 
 import java.util.List;
 
