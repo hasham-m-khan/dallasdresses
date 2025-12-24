@@ -1,4 +1,4 @@
-package com.dallasdresses.entities.enums.enums;
+package com.dallasdresses.entities.enums;
 
 public enum UserRole {
     USER,

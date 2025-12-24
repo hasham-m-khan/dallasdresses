@@ -1,7 +1,6 @@
 package com.dallasdresses.entities;
 
-import com.dallasdresses.entities.enums.enums.AddressType;
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.dallasdresses.entities.enums.AddressType;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
