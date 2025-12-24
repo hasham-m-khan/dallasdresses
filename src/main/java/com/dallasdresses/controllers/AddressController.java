@@ -7,6 +7,8 @@ import com.dallasdresses.dtos.common.ApiResponse;
 import com.dallasdresses.services.AddressService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -15,7 +17,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/addresses")
+@RequestMapping("${app.api.baseurl}/addresses")
 public class AddressController {
 
     private final AddressService addressService;
@@ -42,7 +44,7 @@ public class AddressController {
     }
 
     @GetMapping( "/{userId}")
-    public ApiResponse<List<AddressDto>> getAddressesByUserId(@PathVariable Long userId){
+    public ApiResponse<List<AddressDto>> getAddressesByUserId(@NonNull @PathVariable Long userId){
         log.info("🧲 Fetching user with id: {}", userId);
 
         Map<String, Object> metadata = new HashMap<>();

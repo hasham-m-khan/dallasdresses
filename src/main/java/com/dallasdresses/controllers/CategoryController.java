@@ -7,6 +7,8 @@ import com.dallasdresses.dtos.common.ApiResponse;
 import com.dallasdresses.services.CategoryServiceImpl;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.lang.NonNull;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -15,7 +17,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/categories")
+@RequestMapping("${app.api.baseurl}/categories")
 public class CategoryController {
 
     private final CategoryServiceImpl categoryService;
@@ -44,7 +46,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
-    public ApiResponse<CategoryDto> getCategoryById(@PathVariable Long id) {
+    public ApiResponse<CategoryDto> getCategoryById(@NonNull @PathVariable Long id) {
         log.info("🧲 Fetching category with id: {}", id);
 
         CategoryDto category = categoryService.getCategoryById(id);
