@@ -3,6 +3,7 @@ package com.dallasdresses.converters;
 import com.dallasdresses.dtos.response.UserDto;
 import com.dallasdresses.entities.User;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -17,10 +18,7 @@ public class UserDtoToUserConverter implements Converter<UserDto, User> {
     }
 
     @Override
-    public User convert(UserDto userDto) {
-        if (userDto == null) {
-            return null;
-        }
+    public User convert(@NonNull UserDto userDto) {
 
         return User.builder()
                 .id(userDto.getId())

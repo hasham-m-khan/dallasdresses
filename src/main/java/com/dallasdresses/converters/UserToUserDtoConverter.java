@@ -4,6 +4,7 @@ import com.dallasdresses.dtos.response.AddressDto;
 import com.dallasdresses.dtos.response.UserDto;
 import com.dallasdresses.entities.User;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 import java.util.HashSet;
@@ -20,11 +21,7 @@ public class UserToUserDtoConverter implements Converter<User, UserDto> {
     }
 
     @Override
-    public UserDto convert(User user) {
-
-        if (user == null) {
-            return null;
-        }
+    public UserDto convert(@NonNull User user) {
 
         Set<AddressDto> addresses = new HashSet<>();
         if (!user.getAddresses().isEmpty() && user.getAddresses() != null) {
