@@ -13,7 +13,7 @@ import java.util.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("${app.api.baseurl}/users")
 public class UserController {
 
     private final UserService userService;
