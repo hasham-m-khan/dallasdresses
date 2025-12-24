@@ -1,6 +1,6 @@
 package com.dallasdresses.dtos.request;
 
-import com.dallasdresses.entities.enums.enums.AddressType;
+import com.dallasdresses.entities.enums.AddressType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

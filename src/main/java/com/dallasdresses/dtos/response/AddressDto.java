@@ -1,6 +1,6 @@
 package com.dallasdresses.dtos.response;
 
-import com.dallasdresses.entities.enums.enums.AddressType;
+import com.dallasdresses.entities.enums.AddressType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
