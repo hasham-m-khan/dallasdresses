@@ -11,7 +11,7 @@ public interface ItemVariantService {
     Page<ItemVariantDto> getAllVariants(Pageable pageable);
     Page<ItemVariantDto> getVariantsByItem(Long itemId, Pageable pageable);
     ItemVariantDto getItemVariantById(long id);
-    ItemVariantDto createItemVariant(ItemVariantCreateRequest request);
-    ItemVariantDto updateItemVariant(Long id, ItemVariantUpdateRequest request);
+    ItemVariantDto createItemVariant(Long itemId, ItemVariantCreateRequest request);
+    ItemVariantDto updateItemVariant(Long itemId, Long variantId, ItemVariantUpdateRequest request);
     void deleteItemVariant(long id);
 }

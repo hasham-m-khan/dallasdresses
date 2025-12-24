@@ -62,16 +62,16 @@ public class ItemVariantServiceImpl implements ItemVariantService {
 
     @Override
     @Transactional
-    public ItemVariantDto createItemVariant(ItemVariantCreateRequest request) {
+    public ItemVariantDto createItemVariant(Long itemId, ItemVariantCreateRequest request) {
         if (variantRepository.existsByItemIdAndColorAndSize(
-                request.getItemId(),
+                itemId,
                 request.getColor(),
                 request.getSize())) {
-            throw new DuplicateEntityException("Item variant already exists");
+            throw new DuplicateEntityException("Item variant");
         }
 
-        Item item = itemRepository.findById(request.getItemId())
-                .orElseThrow(() -> new EntityNotFoundException("Item", request.getItemId()));
+        Item item = itemRepository.findById(itemId)
+                .orElseThrow(() -> new EntityNotFoundException("Item", itemId));
 
         ItemVariant variant = ItemVariant.builder()
                 .color(request.getColor())
@@ -86,9 +86,12 @@ public class ItemVariantServiceImpl implements ItemVariantService {
     }
 
     @Override
-    public ItemVariantDto updateItemVariant(Long id, ItemVariantUpdateRequest request) {
-        ItemVariant variant = variantRepository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Item variant", id));
+    @Transactional
+    public ItemVariantDto updateItemVariant(Long itemId, Long variantId, ItemVariantUpdateRequest request) {
+
+        ItemVariant variant = variantRepository.findByIdAndItemId(variantId, itemId)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        String.format("Variant with id: %d not found for item with id: %d", variantId, itemId)));
 
         // Check for duplicate if color/size changed
         if (isColorOrSizeChanged(variant, request)) {
@@ -96,15 +99,15 @@ public class ItemVariantServiceImpl implements ItemVariantService {
             DressSize newSize = request.getSize() != null ? request.getSize() : variant.getSize();
 
             if (variantRepository.existsByItemIdAndColorAndSizeAndIdNot(
-                    variant.getItem().getId(), newColor, newSize, id)) {
+                    variant.getItem().getId(), newColor, newSize, variant.getId())) {
                 throw new DuplicateEntityException(
                         "Another variant with this color and size already exists");
             }
         }
 
         updateVariantFields(variant, request);
-
         ItemVariant updatedVariant = variantRepository.save(variant);
+
         return varDtoConverter.convert(updatedVariant);
     }
 
