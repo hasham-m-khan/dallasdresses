@@ -10,6 +10,8 @@ import com.dallasdresses.dtos.request.CategoryCreateRequest;
 import com.dallasdresses.dtos.request.CategoryUpdateRequest;
 import com.dallasdresses.repositories.CategoryRepository;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +40,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
-    public CategoryDto getCategoryById(Long id) {
+    public CategoryDto getCategoryById(@NonNull Long id) {
 
         return categoryRepository.findById(id)
                 .map(categoryDtoConverter::convert)
@@ -62,7 +64,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public CategoryDto createCategory(CategoryCreateRequest request) {
+    public @NonNull CategoryDto createCategory(CategoryCreateRequest request) {
 
         String slug = request.getSlug();
         if (slug == null || slug.isEmpty()) {
@@ -79,9 +81,11 @@ public class CategoryServiceImpl implements CategoryService {
                     .slug(slug)
                     .build();
 
-            return categoryDtoConverter.convert(
-                    categoryRepository.save(category));
+            Category savedCategory = categoryRepository.save(category);
+
+            return categoryDtoConverter.convert(savedCategory);
         } catch (Exception ex) {
+            log.error("Error creating category", ex);
             throw new InvalidEntityException("Error creating category");
         }
     }
@@ -91,8 +95,13 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto updateCategory(CategoryUpdateRequest request) {
 
         // Check if category exists
-        Category existingCategory = categoryRepository.findById(request.getId())
-                .orElseThrow(() -> new EntityNotFoundException("category", request.getId()));
+        Long catId = request.getId();
+        if (catId == null) {
+            throw new IllegalArgumentException("Category id cannot be null");
+        }
+
+        Category existingCategory = categoryRepository.findById(catId)
+                .orElseThrow(() -> new EntityNotFoundException("category", catId));
 
         String slug = request.getSlug();
         if (slug == null || slug.isEmpty()) {
@@ -118,7 +127,7 @@ public class CategoryServiceImpl implements CategoryService {
 
     @Override
     @Transactional
-    public void deleteCategory(Long id) {
+    public void deleteCategory(@NonNull Long id) {
         categoryRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("category", id));
 
@@ -128,10 +137,11 @@ public class CategoryServiceImpl implements CategoryService {
     @Override
     @Transactional
     public void deleteCategoryByName(String name) {
-        Category category = categoryRepository.findByName(name)
-                .orElseThrow(() -> new EntityNotFoundException("category", "name", name));
+        Integer deleteCount = categoryRepository.deleteByName(name);
 
-        categoryRepository.deleteById(category.getId());
+        if (deleteCount == 0) {
+            throw new EntityNotFoundException("category", "name", name);
+        }
     }
 
     private String generateSlug(String name) {

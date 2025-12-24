@@ -3,13 +3,14 @@ package com.dallasdresses.converters;
 import com.dallasdresses.dtos.response.AddressDto;
 import com.dallasdresses.entities.Address;
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AddressToAddressDtoConverter implements Converter<Address, AddressDto> {
 
     @Override
-    public AddressDto convert(Address address) {
+    public AddressDto convert(@NonNull Address address) {
 
         return new AddressDto(
                 address.getId(),

@@ -6,11 +6,13 @@ import com.dallasdresses.dtos.request.AddressUpdateRequest;
 
 import java.util.List;
 
+import org.springframework.lang.NonNull;
+
 public interface AddressService {
 
     List<AddressDto> getAllAddresses();
-    List<AddressDto> getAddressByUserId(Long userId);
+    List<AddressDto> getAddressByUserId(@NonNull Long userId);
     AddressDto createAddress(AddressCreateRequest request);
     AddressDto updateAddress(AddressUpdateRequest request);
-    void deleteAddress(Long addressId);
+    void deleteAddress(@NonNull Long addressId);
 }

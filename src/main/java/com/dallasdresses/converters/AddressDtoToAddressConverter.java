@@ -3,18 +3,16 @@ package com.dallasdresses.converters;
 import com.dallasdresses.dtos.response.AddressDto;
 import com.dallasdresses.entities.Address;
 import com.dallasdresses.entities.User;
+
 import org.springframework.core.convert.converter.Converter;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 @Component
 public class AddressDtoToAddressConverter implements Converter<AddressDto, Address> {
 
     @Override
-    public Address convert(AddressDto addressDto) {
-
-        if (addressDto == null) {
-            return null;
-        }
+    public Address convert(@NonNull AddressDto addressDto) {
 
         return Address.builder()
                 .id(addressDto.getId())
