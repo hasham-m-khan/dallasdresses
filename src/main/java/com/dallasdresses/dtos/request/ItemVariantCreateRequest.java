@@ -21,7 +21,4 @@ public class ItemVariantCreateRequest {
 
     @NotNull
     private Integer stock;
-
-    @NotNull
-    private Long itemId;
 }
