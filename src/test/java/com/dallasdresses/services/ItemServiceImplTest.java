@@ -53,7 +53,7 @@ class ItemServiceImplTest {
                 .description("Item1")
                 .summary("Item1")
                 .price(new BigDecimal("33.99"))
-                .discountType(DiscountType.AMOUNT)
+                .discountType(DiscountType.FIXED)
                 .discountAmount(10.00)
                 .build();
 
@@ -63,7 +63,7 @@ class ItemServiceImplTest {
                 .description("Item2")
                 .summary("Item2")
                 .price(new BigDecimal("12.99"))
-                .discountType(DiscountType.PERCENT)
+                .discountType(DiscountType.PERCENTAGE)
                 .discountAmount(5.0)
                 .build();
 
@@ -73,7 +73,7 @@ class ItemServiceImplTest {
                 .description("Item1")
                 .summary("Item1")
                 .price(new BigDecimal("33.99"))
-                .discountType(DiscountType.AMOUNT)
+                .discountType(DiscountType.FIXED)
                 .discountAmount(10.00)
                 .build();
 
@@ -83,7 +83,7 @@ class ItemServiceImplTest {
                 .description("Item2")
                 .summary("Item2")
                 .price(new BigDecimal("12.99"))
-                .discountType(DiscountType.PERCENT)
+                .discountType(DiscountType.PERCENTAGE)
                 .discountAmount(5.0)
                 .build();
 
@@ -310,7 +310,7 @@ class ItemServiceImplTest {
                 .categories(categoriesRequest)
                 .build();
 
-        when(categoryRepository.findBySlugIn(any())).thenReturn(new ArrayList<Category>(categories));
+        when(categoryRepository.findBySlugIn(any())).thenReturn(new ArrayList<>(categories));
 
         when(itemRepository.findById(item1.getId())).thenReturn(Optional.of(item1));
         when(itemRepository.save(any(Item.class))).thenReturn(item1);
