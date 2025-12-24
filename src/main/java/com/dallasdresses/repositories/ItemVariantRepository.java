@@ -23,6 +23,8 @@ public interface ItemVariantRepository extends JpaRepository<ItemVariant, Long> 
     @Query("SELECT iv FROM ItemVariant iv LEFT JOIN FETCH iv.item WHERE iv.id = :id")
     Optional<ItemVariant> findByIdWithItem(@Param("id") Long id);
 
+    Optional<ItemVariant> findByIdAndItemId(Long id, Long itemId);
+
     Boolean existsByItemIdAndColorAndSize(Long itemId, String color, DressSize size);
     boolean existsByItemIdAndColorAndSizeAndIdNot(Long itemId, String color, DressSize size, Long id);
 }
