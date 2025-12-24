@@ -41,8 +41,25 @@ public class GlobalExceptionHandler {
                 "Validation failed for one or more fields",
                 request,
                 validationErrors,
-                false)
-                .createResponse();
+                false
+        ).createResponse();
+    }
+
+    @ExceptionHandler(RuntimeException.class)
+    public ResponseEntity<ApiResponse<Object>> handleRuntimeException(
+            RuntimeException ex,
+            HttpServletRequest request) {
+
+        log.error("🥊 Error: {}",  ex.getMessage());
+
+        return new ErrorResponse(
+                "Error processing request",
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                ex.getMessage(),
+                request,
+                null,
+                false
+        ).createResponse();
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class})
@@ -73,8 +90,8 @@ public class GlobalExceptionHandler {
                 "Invalid request",
                 request,
                 errors.isEmpty() ? null : errors,
-                false)
-                .createResponse();
+                false
+        ).createResponse();
     }
 
     @ExceptionHandler({EntityNotFoundException.class})
@@ -92,9 +109,9 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND,
                 ex.getMessage(),
                 request,
-                null,
-                false)
-                .createResponse();
+                errors,
+                false
+        ).createResponse();
     }
 
     @ExceptionHandler({DuplicateEntityException.class})
@@ -112,9 +129,9 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 ex.getMessage(),
                 request,
-                null,
-                false)
-                .createResponse();
+                errors,
+                false
+        ).createResponse();
     }
 
     @ExceptionHandler({InvalidEntityException.class})
@@ -132,8 +149,8 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST,
                 "Invalid entity",
                 request,
-                null,
-                false)
-                .createResponse();
+                errors,
+                false
+        ).createResponse();
     }
 }
