@@ -13,6 +13,8 @@ import com.dallasdresses.dtos.request.AddressUpdateRequest;
 import com.dallasdresses.repositories.AddressRepository;
 import com.dallasdresses.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,7 +46,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public List<AddressDto> getAddressByUserId(Long userId) {
+    public List<AddressDto> getAddressByUserId(@NonNull Long userId) {
 
         userRepository.findById(userId).orElseThrow(
                 () -> new EntityNotFoundException("No addresses found for the user"));
@@ -64,7 +66,12 @@ public class AddressServiceImpl implements AddressService {
     @Transactional
     public AddressDto createAddress(AddressCreateRequest request) {
 
-        User user = userRepository.findById(request.getUserId())
+        Long userId = request.getUserId();
+        if (userId == null) {
+            throw new IllegalArgumentException("User ID is required");
+        }
+
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new EntityNotFoundException("user", request.getUserId()));
 
         Optional<Address> existingAddress = addressRepository
@@ -102,13 +109,23 @@ public class AddressServiceImpl implements AddressService {
     @Transactional
     public AddressDto updateAddress(AddressUpdateRequest request) {
 
-        Address existingAddress = addressRepository.findById(request.getId())
-                .orElseThrow(() -> new EntityNotFoundException("address", request.getId()));
+        Long addressId = request.getId();
+        if (addressId == null) {
+            throw new IllegalArgumentException("Address id cannot be null");
+        }
 
-        User user = userRepository.findById(request.getUserId())
-                .orElseThrow(() -> new  EntityNotFoundException("user", request.getUserId()));
+        Long userId = request.getUserId();
+        if (userId == null) {
+            throw new IllegalArgumentException("User id cannot be null");
+        }
 
-        if (!existingAddress.getUser().getId().equals(user.getId())) {
+        Address existingAddress = addressRepository.findById(addressId)
+                .orElseThrow(() -> new EntityNotFoundException("address", addressId));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new  EntityNotFoundException("user", userId));
+
+        if (!existingAddress.getUser().getId().equals(userId)) {
             throw new EntityUpdateException("Address does not belong to user");
         }
 
@@ -120,6 +137,7 @@ public class AddressServiceImpl implements AddressService {
             existingAddress.setState(request.getState());
             existingAddress.setCountry(request.getCountry());
             existingAddress.setPostalCode(request.getPostalCode());
+            existingAddress.setUser(user);
 
             Address savedAddress = addressRepository.save(existingAddress);
 
@@ -131,7 +149,7 @@ public class AddressServiceImpl implements AddressService {
 
     @Override
     @Transactional
-    public void deleteAddress(Long addressId) {
+    public void deleteAddress(@NonNull Long addressId) {
 
         // Future considerations:
         //  Is this the user's only address?
