@@ -28,6 +28,7 @@ public class Category {
     @NotBlank
     private String slug;
 
+    @Builder.Default
     @ManyToMany(mappedBy = "categories")
     private Set<Item> items = new HashSet<>();
 }
