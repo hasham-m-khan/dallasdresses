@@ -1,6 +1,6 @@
 package com.dallasdresses.entities;
 
-import com.dallasdresses.entities.enums.enums.ProviderId;
+import com.dallasdresses.entities.enums.ProviderId;
 import jakarta.persistence.Embeddable;
 import lombok.Data;
 

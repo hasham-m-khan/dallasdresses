@@ -1,6 +1,6 @@
 package com.dallasdresses.entities;
 
-import com.dallasdresses.entities.enums.enums.UserRole;
+import com.dallasdresses.entities.enums.UserRole;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -55,6 +55,7 @@ public class User {
     @Builder.Default
     private Set<Address> addresses = new HashSet<>();
 
+    @Builder.Default
     @OneToMany(cascade =CascadeType.ALL, mappedBy = "user")
     private Set<Credential> credentials = new HashSet<>();
 

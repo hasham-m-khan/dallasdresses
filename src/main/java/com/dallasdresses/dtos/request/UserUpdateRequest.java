@@ -1,6 +1,6 @@
 package com.dallasdresses.dtos.request;
 
-import com.dallasdresses.entities.enums.enums.UserRole;
+import com.dallasdresses.entities.enums.UserRole;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;

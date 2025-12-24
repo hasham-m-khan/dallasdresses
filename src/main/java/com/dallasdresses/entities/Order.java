@@ -1,6 +1,6 @@
 package com.dallasdresses.entities;
 
-import com.dallasdresses.entities.enums.enums.OrderStatus;
+import com.dallasdresses.entities.enums.OrderStatus;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

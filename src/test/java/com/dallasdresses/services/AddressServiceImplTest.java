@@ -4,7 +4,7 @@ import com.dallasdresses.converters.AddressToAddressDtoConverter;
 import com.dallasdresses.dtos.response.AddressDto;
 import com.dallasdresses.entities.Address;
 import com.dallasdresses.entities.User;
-import com.dallasdresses.entities.enums.enums.AddressType;
+import com.dallasdresses.entities.enums.AddressType;
 import com.dallasdresses.exceptions.DuplicateEntityException;
 import com.dallasdresses.exceptions.EntityNotFoundException;
 import com.dallasdresses.exceptions.EntityUpdateException;
@@ -297,9 +297,7 @@ class AddressServiceImplTest {
         when(addressRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         // Act & Assert
-        EntityNotFoundException exception = assertThrows(
-                EntityNotFoundException.class,
-                () -> addressService.updateAddress(ur));
+        assertThrows(EntityNotFoundException.class, () -> addressService.updateAddress(ur));
 
         verify(addressRepository, times(1)).findById(anyLong());
         verify(userRepository, never()).findById(anyLong());
@@ -315,9 +313,7 @@ class AddressServiceImplTest {
         when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
 
         // Act & Assert
-        EntityNotFoundException exception = assertThrows(
-                EntityNotFoundException.class,
-                () -> addressService.updateAddress(ur));
+        assertThrows(EntityNotFoundException.class, () -> addressService.updateAddress(ur));
 
         verify(addressRepository, times(1)).findById(anyLong());
         verify(userRepository, times(1)).findById(anyLong());

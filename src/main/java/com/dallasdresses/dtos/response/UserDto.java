@@ -1,6 +1,6 @@
 package com.dallasdresses.dtos.response;
 
-import com.dallasdresses.entities.enums.enums.UserRole;
+import com.dallasdresses.entities.enums.UserRole;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,5 +28,6 @@ public class UserDto {
     private Timestamp createdAt;
     private Timestamp updatedAt;
 
+    @Builder.Default
     private Set<AddressDto> addresses =  new HashSet<>();
 }
