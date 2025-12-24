@@ -151,7 +151,8 @@ class ItemVariantServiceImplTest {
         Pageable pageable = PageRequest.of(0, 10);
         Page<ItemVariant> variantPage = new PageImpl<>(variants, pageable, variants.size());
 
-        when(variantRepository.findAllWithItem(pageable)).thenReturn(variantPage);;
+        when(variantRepository.findAllWithItem(pageable)).thenReturn(variantPage);
+        ;
         when(variantDtoConverter.convert(variant1)).thenReturn(variantDto1);
         when(variantDtoConverter.convert(variant2)).thenReturn(variantDto2);
         when(variantDtoConverter.convert(variant3)).thenReturn(variantDto3);
@@ -205,25 +206,24 @@ class ItemVariantServiceImplTest {
         req.setSize(variant1.getSize());
         req.setPrice(variant1.getPrice());
         req.setStock(variant1.getStock());
-        req.setItemId(variant1.getItem().getId());
 
         ItemVariant variantToSave = variant1;
         variantToSave.setId(null);
 
         when(variantRepository.existsByItemIdAndColorAndSize(
-                req.getItemId(), req.getColor(), req.getSize())).thenReturn(false);
-        when(itemRepository.findById(req.getItemId())).thenReturn(Optional.of(item1));
+                variant1.getItem().getId(), req.getColor(), req.getSize())).thenReturn(false);
+        when(itemRepository.findById(variant1.getItem().getId())).thenReturn(Optional.of(item1));
         when(variantRepository.save(any(ItemVariant.class))).thenReturn(variant1);
         when(variantDtoConverter.convert(variant1)).thenReturn(variantDto1);
 
         // Act
-        ItemVariantDto result = variantService.createItemVariant(req);
+        ItemVariantDto result = variantService.createItemVariant(variant1.getItem().getId(), req);
 
         // Assert
         assertEquals(variantDto1, result);
         verify(variantRepository, times(1)).existsByItemIdAndColorAndSize(
-                req.getItemId(), req.getColor(), req.getSize());
-        verify(itemRepository, times(1)).findById(req.getItemId());
+                variant1.getItem().getId(), req.getColor(), req.getSize());
+        verify(itemRepository, times(1)).findById(item1.getId());
         verify(variantRepository, times(1)).save(any(ItemVariant.class));
         verify(variantDtoConverter, times(1)).convert(variant1);
     }
@@ -237,17 +237,17 @@ class ItemVariantServiceImplTest {
         req.setSize(variant1.getSize());
         req.setPrice(variant1.getPrice());
         req.setStock(variant1.getStock());
-        req.setItemId(variant1.getItem().getId());
 
         when(variantRepository.existsByItemIdAndColorAndSize(
-                req.getItemId(), req.getColor(), req.getSize())).thenReturn(true);
+                variant1.getItem().getId(), req.getColor(), req.getSize())).thenReturn(true);
 
         // Act & Assert
-        assertThrows(DuplicateEntityException.class, () -> variantService.createItemVariant(req));
+        assertThrows(DuplicateEntityException.class, () ->
+                variantService.createItemVariant(variant1.getItem().getId(), req));
 
         verify(variantRepository, times(1)).existsByItemIdAndColorAndSize(
-                req.getItemId(), req.getColor(), req.getSize());
-        verify(itemRepository, never()).findById(req.getItemId());
+                variant1.getItem().getId(), req.getColor(), req.getSize());
+        verify(itemRepository, never()).findById(variant1.getItem().getId());
         verify(variantRepository, never()).save(any(ItemVariant.class));
         verify(variantDtoConverter, never()).convert(any(ItemVariant.class));
     }
@@ -261,18 +261,18 @@ class ItemVariantServiceImplTest {
         req.setSize(variant1.getSize());
         req.setPrice(variant1.getPrice());
         req.setStock(variant1.getStock());
-        req.setItemId(variant1.getItem().getId());
 
         when(variantRepository.existsByItemIdAndColorAndSize(
-                req.getItemId(), req.getColor(), req.getSize())).thenReturn(false);
-        when(itemRepository.findById(req.getItemId())).thenReturn(Optional.empty());
+                variant1.getItem().getId(), req.getColor(), req.getSize())).thenReturn(false);
+        when(itemRepository.findById(variant1.getItem().getId())).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> variantService.createItemVariant(req));
+        assertThrows(EntityNotFoundException.class, () ->
+                variantService.createItemVariant(variant1.getItem().getId(), req));
 
         verify(variantRepository, times(1)).existsByItemIdAndColorAndSize(
-                req.getItemId(), req.getColor(), req.getSize());
-        verify(itemRepository, times(1)).findById(req.getItemId());
+                variant1.getItem().getId(), req.getColor(), req.getSize());
+        verify(itemRepository, times(1)).findById(variant1.getItem().getId());
         verify(variantRepository, never()).save(any(ItemVariant.class));
         verify(variantDtoConverter, never()).convert(any(ItemVariant.class));
     }
@@ -295,17 +295,20 @@ class ItemVariantServiceImplTest {
         ItemVariantDto updatedVariantDto = variantDto1;
         updatedVariantDto.setColor(colorToUpdate);
 
-        when(variantRepository.findById(variant1.getId())).thenReturn(Optional.of(variant1));
+        when(variantRepository.findByIdAndItemId(variant1.getId(), variant1.getItem().getId()))
+                .thenReturn(Optional.of(variant1));
         when(variantRepository.save(any(ItemVariant.class))).thenReturn(updatedVariant);
         when(variantDtoConverter.convert(any(ItemVariant.class))).thenReturn(updatedVariantDto);
 
         // Act
-        ItemVariantDto result = variantService.updateItemVariant(variant1.getId(), req);
+        ItemVariantDto result = variantService.updateItemVariant(
+                variant1.getItem().getId(), variant1.getId(), req);
 
         // Arrange
         assertEquals(updatedVariantDto, result);
 
-        verify(variantRepository, times(1)).findById(variant1.getId());
+        verify(variantRepository, times(1))
+                .findByIdAndItemId(variant1.getId(), variant1.getItem().getId());
         verify(variantRepository, never()).existsByItemIdAndColorAndSizeAndIdNot(any(), any(), any(), any());
         verify(variantRepository, times(1)).save(any(ItemVariant.class));
         verify(variantDtoConverter, times(1)).convert(any(ItemVariant.class));
@@ -321,12 +324,15 @@ class ItemVariantServiceImplTest {
         req.setPrice(variant1.getPrice());
         req.setStock(variant1.getStock());
 
-        when(variantRepository.findById(variant1.getId())).thenReturn(Optional.empty());
+        when(variantRepository.findByIdAndItemId(variant1.getId(), variant1.getItem().getId()))
+                .thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(EntityNotFoundException.class, () ->  variantService.updateItemVariant(variant1.getId(), req));
+        assertThrows(EntityNotFoundException.class, () -> variantService.updateItemVariant(
+                variant1.getItem().getId(), variant1.getId(), req));
 
-        verify(variantRepository, times(1)).findById(variant1.getId());
+        verify(variantRepository, times(1))
+                .findByIdAndItemId(variant1.getId(), variant1.getItem().getId());
         verify(variantRepository, never()).existsByItemIdAndColorAndSizeAndIdNot(any(), any(), any(), any());
         verify(variantRepository, never()).save(any(ItemVariant.class));
         verify(variantDtoConverter, never()).convert(any(ItemVariant.class));
@@ -342,15 +348,17 @@ class ItemVariantServiceImplTest {
         req.setPrice(variant1.getPrice());
         req.setStock(variant1.getStock());
 
-        when(variantRepository.findById(variant1.getId())).thenReturn(Optional.of(variant1));
+        when(variantRepository.findByIdAndItemId(variant1.getId(), variant1.getItem().getId()))
+                .thenReturn(Optional.of(variant1));
         when(variantRepository.existsByItemIdAndColorAndSizeAndIdNot(
                 any(), any(), any(), any()
         )).thenReturn(Boolean.TRUE);
 
         // Act & Assert
-        assertThrows(DuplicateEntityException.class, () ->  variantService.updateItemVariant(variant1.getId(), req));
+        assertThrows(DuplicateEntityException.class, () -> variantService.updateItemVariant(
+                variant1.getItem().getId(), variant1.getId(), req));
 
-        verify(variantRepository, times(1)).findById(variant1.getId());
+        verify(variantRepository, times(1)).findByIdAndItemId(variant1.getId(), variant1.getItem().getId());
         verify(variantRepository, times(1)).existsByItemIdAndColorAndSizeAndIdNot(any(), any(), any(), any());
         verify(variantRepository, never()).save(any(ItemVariant.class));
         verify(variantDtoConverter, never()).convert(any(ItemVariant.class));
