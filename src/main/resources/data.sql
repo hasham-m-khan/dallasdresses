@@ -27,7 +27,56 @@ VALUES ('1060 W Addison ST', 'Chicago', 'IL', 'USA', '60613',
 
 
 -- Categories Table
-INSERT INTO categories (NAME, SLUG) VALUES ('Jackets', 'jackets');
-INSERT INTO categories (NAME, SLUG) VALUES ('Jeans', 'jeans');
-INSERT INTO categories (NAME, SLUG) VALUES ('Mens', 'mens');
-INSERT INTO categories (NAME, SLUG) VALUES ('Womens', 'womens');
+INSERT INTO categories (NAME, SLUG) VALUES ('Keyboard', 'keyboard');
+INSERT INTO categories (NAME, SLUG) VALUES ('Computer Peripherals', 'peripherals');
+INSERT INTO categories (NAME, SLUG) VALUES ('Office', 'office');
+INSERT INTO categories (NAME, SLUG) VALUES ('Stationary', 'stationary');
+
+
+-- Items Table
+INSERT INTO items (NAME, DESCRIPTION, SUMMARY, PRICE, DISCOUNT_TYPE, DISCOUNT_AMOUNT)
+VALUES('Sharara Khada dupatta - 8 count', 'Some description', 'Some summary', 11.99,
+       'NONE', 0.0);
+INSERT INTO items (NAME, DESCRIPTION, SUMMARY, PRICE, DISCOUNT_TYPE, DISCOUNT_AMOUNT)
+VALUES('Anarkali Cream and White', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vel.',
+       'Some summary', 39.99, 'NONE', 0.0);
+INSERT INTO items (NAME, DESCRIPTION, SUMMARY, PRICE, DISCOUNT_TYPE, DISCOUNT_AMOUNT)
+VALUES('Corsair Sabre v2 Pro Wireless Gaming Mouse - 33,000 DPI', 'Suspendisse potenti. Nulla sodales congue dolor.',
+       'Some summary', 99.99, 'NONE', 0.0);
+INSERT INTO items (NAME, DESCRIPTION, SUMMARY, PRICE, DISCOUNT_TYPE, DISCOUNT_AMOUNT)
+VALUES('EPOMAKER Aula F108 Wireless Gaming Keyboard, Full Size', 'Nulla non dictum augue, eleifend rutrum sapien.',
+       'Some summary', 99.99, 'NONE', 0.0);
+INSERT INTO items (NAME, DESCRIPTION, SUMMARY, PRICE, DISCOUNT_TYPE, DISCOUNT_AMOUNT)
+VALUES('Redragon K630 60% Wired RGB Gaming Keyboard - Blue Switches', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer vel.',
+       'Some summary', 49.99, 'NONE', 0.0);
+
+-- ItemCategory Table
+INSERT INTO item_category (ITEM_ID, CATEGORY_ID)
+VALUES(1, 3);
+INSERT INTO item_category (ITEM_ID, CATEGORY_ID)
+VALUES(1, 4);
+INSERT INTO item_category (ITEM_ID, CATEGORY_ID)
+VALUES(2, 1);
+INSERT INTO item_category (ITEM_ID, CATEGORY_ID)
+VALUES(2, 2);
+INSERT INTO item_category (ITEM_ID, CATEGORY_ID)
+VALUES(3, 2);
+INSERT INTO item_category (ITEM_ID, CATEGORY_ID)
+VALUES(4, 1);
+INSERT INTO item_category (ITEM_ID, CATEGORY_ID)
+VALUES(4, 2);
+INSERT INTO item_category (ITEM_ID, CATEGORY_ID)
+VALUES(5, 1);
+INSERT INTO item_category (ITEM_ID, CATEGORY_ID)
+VALUES(5, 2);
+
+INSERT INTO item_variants (ITEM_ID, COLOR, SIZE, PRICE, STOCK)
+VALUES (1, 'red', 'MD', 29.99, 10);
+INSERT INTO item_variants (ITEM_ID, COLOR, SIZE, PRICE, STOCK)
+VALUES (1, 'blue', 'SM', 29.99, 7);
+INSERT INTO item_variants (ITEM_ID, COLOR, SIZE, PRICE, STOCK)
+VALUES (1, 'teal', 'LG', 29.99, 15);
+INSERT INTO item_variants (ITEM_ID, COLOR, SIZE, PRICE, STOCK)
+VALUES (2, 'green', 'MD', 64.99, 7);
+INSERT INTO item_variants (ITEM_ID, COLOR, SIZE, PRICE, STOCK)
+VALUES (2, 'red', 'XL', 115.99, 12);
