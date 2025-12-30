@@ -1,7 +1,9 @@
 package com.dallasdresses.entities;
 
 import com.dallasdresses.entities.enums.DiscountType;
+import com.dallasdresses.entities.enums.DressSize;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -35,25 +37,33 @@ public class Item {
     @NotBlank
     private String description;
 
-    @Lob
-    @NotBlank
-    private String summary;
+    private String color;
+
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    private DressSize size;
+
+    @NotNull
+    @Min(0)
+    private Integer quantity;
 
     @NotNull
     private BigDecimal price;
 
-    @NotNull
     @Enumerated(EnumType.STRING)
     private DiscountType discountType;
 
-    @NotNull
-    private Double discountAmount;
+    @Min(0)
+    private Double discountValue;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "parent_id")
+    private Item parent;
+
+    @OneToMany(mappedBy = "parent", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<ItemVariant> variants = new HashSet<>();
+    private Set<Item> children = new HashSet<>();
 
-    @NotNull
     @Builder.Default
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
@@ -63,9 +73,8 @@ public class Item {
     )
     private Set<Category> categories = new HashSet<>();
 
-    @NotNull
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "item", orphanRemoval = true, fetch = FetchType.LAZY)
     @Builder.Default
+    @OneToMany(cascade = CascadeType.ALL, mappedBy = "item", orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ItemImage> itemImages = new HashSet<>();
 
     @CreationTimestamp
@@ -73,11 +82,6 @@ public class Item {
 
     @UpdateTimestamp
     private Timestamp updatedAt;
-
-    public void addVariant(ItemVariant variant) {
-        this.variants.add(variant);
-        variant.setItem(this);
-    }
 
     public void addImage(ItemImage itemImage) {
         itemImages.add(itemImage);
@@ -87,5 +91,27 @@ public class Item {
     public void addCategory(Category category) {
         categories.add(category);
         category.getItems().add(this);
+    }
+
+    public void addChild(Item child) {
+        if (child != null && !child.equals(this)) {
+            children.add(child);
+            child.setParent(this);
+        }
+    }
+
+    public void removeChild(Item child) {
+        if (child != null) {
+            children.remove(child);
+            child.setParent(null);
+        }
+    }
+
+    public boolean isParent() {
+        return children != null && !children.isEmpty();
+    }
+
+    public boolean isVariant() {
+        return parent != null;
     }
 }
