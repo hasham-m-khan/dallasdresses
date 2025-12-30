@@ -19,7 +19,7 @@ public class AddressToAddressDtoConverter implements Converter<Address, AddressD
                 address.getAddressLine2(),
                 address.getCity(),
                 address.getState(),
-                address.getCountry(),
+                address.getCountry().getName(),
                 address.getPostalCode(),
                 address.getCreatedAt(),
                 address.getUpdatedAt()
