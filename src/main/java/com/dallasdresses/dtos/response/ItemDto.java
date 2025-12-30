@@ -21,8 +21,7 @@ public class ItemDto {
     private String summary;
     private BigDecimal price;
     private DiscountType discountType;
-    private Double discountAmount;
+    private Double discountValue;
     private Set<CategoryDto> categories;
     private Set<ItemImageDto> itemImages;
-    private Set<ItemVariantDto> itemVariants;
 }
