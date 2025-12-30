@@ -44,8 +44,10 @@ public class Address {
     @NotBlank
     private String state;
 
-    @NotBlank
-    private String country;
+    @NotNull
+    @ManyToOne(optional = false,  fetch = FetchType.LAZY)
+    @JoinColumn(name = "country_id")
+    private Country country;
 
     @NotBlank
     @Size(min = 5, max = 10)
