@@ -3,15 +3,16 @@ package com.dallasdresses.services;
 import com.dallasdresses.converters.AddressToAddressDtoConverter;
 import com.dallasdresses.dtos.response.AddressDto;
 import com.dallasdresses.entities.Address;
+import com.dallasdresses.entities.Country;
 import com.dallasdresses.entities.User;
 import com.dallasdresses.entities.enums.AddressType;
 import com.dallasdresses.exceptions.DuplicateEntityException;
 import com.dallasdresses.exceptions.EntityNotFoundException;
 import com.dallasdresses.exceptions.EntityUpdateException;
-import com.dallasdresses.exceptions.InvalidEntityException;
 import com.dallasdresses.dtos.request.AddressCreateRequest;
 import com.dallasdresses.dtos.request.AddressUpdateRequest;
 import com.dallasdresses.repositories.AddressRepository;
+import com.dallasdresses.repositories.CountryRepository;
 import com.dallasdresses.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -40,11 +41,15 @@ class AddressServiceImplTest {
     UserRepository userRepository;
 
     @Mock
+    CountryRepository countryRepository;
+
+    @Mock
     AddressToAddressDtoConverter addressDtoConverter;
 
     @InjectMocks
     AddressServiceImpl addressService;
 
+    Country country;
     Address address1;
     Address address2;
     AddressDto addressDto1;
@@ -55,13 +60,18 @@ class AddressServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        country = Country.builder()
+                .id(1L)
+                .name("USA")
+                .build();
+
         address1 = new Address();
         address1.setId(1L);
         address1.setAddressType(AddressType.RESIDENTIAL);
         address1.setAddressLine1("123 Main ST");
         address1.setCity("Chicago");
         address1.setState("IL");
-        address1.setCountry("USA");
+        address1.setCountry(country);
         address1.setPostalCode("30301");
 
         address2 = new Address();
@@ -70,7 +80,7 @@ class AddressServiceImplTest {
         address2.setAddressLine1("456 Elm ST");
         address2.setCity("Queens");
         address2.setState("NY");
-        address2.setCountry("USA");
+        address2.setCountry(country);
         address2.setPostalCode("11428");
 
         addressDto1 = new AddressDto(1L, AddressType.RESIDENTIAL, "123 Main ST", null,
@@ -84,18 +94,19 @@ class AddressServiceImplTest {
         cr =  new AddressCreateRequest();
         cr.setUserId(user.getId());
         cr.setAddressLine1("123 Main ST");
-        cr.setCity("Queens");
-        cr.setState("NY");
+        cr.setCity("Chicago");
+        cr.setState("IL");
         cr.setPostalCode("30301");
+        cr.setCountry(country.getName());
 
         ur = new AddressUpdateRequest();
         ur.setId(1L);
         ur.setUserId(user.getId());
-        ur.setAddressType(AddressType.ALTERNATE);
+        ur.setAddressType(AddressType.RESIDENTIAL);
         ur.setAddressLine1("Some New Street");
         ur.setCity("Queens");
         ur.setState("NY");
-        ur.setCountry("USA");
+        ur.setCountry(country.getName());
         ur.setPostalCode("11428");
     }
 
@@ -181,6 +192,7 @@ class AddressServiceImplTest {
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
                         anyLong(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(Optional.empty());
+        when(countryRepository.findByNameIgnoreCase(cr.getCountry())).thenReturn(Optional.of(country));
         when(addressRepository.save(any(Address.class))).thenReturn(address1);
         when(addressDtoConverter.convert(address1)).thenReturn(addressDto1);
 
@@ -190,22 +202,42 @@ class AddressServiceImplTest {
         verify(addressRepository, times(1))
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
                         anyLong(), anyString(), anyString(), anyString(), anyString());
+        verify(countryRepository, times(1)).findByNameIgnoreCase(cr.getCountry());
         verify(addressRepository, times(1)).save(any(Address.class));
         verify(addressDtoConverter, times(1)).convert(address1);
     }
 
     @Test
-    @DisplayName("createAddress - Should throw EntityNotFoundException")
-    void testCreateAddress_ShouldThrowEntityNotFoundException_WhenUserNotFound() {
+    @DisplayName("createAddress - Should throw IllegalArgumentException")
+    void testCreateAddress_ShouldThrowIllegalArgumentException_WhenUserIdIsNull() {
         // Arrange & Act
-        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
+        AddressCreateRequest cr3 = new AddressCreateRequest();
+        cr3.setUserId(null);
 
         // Assert
+        assertThrows(IllegalArgumentException.class, () -> addressService.createAddress(cr3));
+        verify(userRepository, never()).findById(anyLong());
+        verify(addressRepository, never())
+                .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
+                        anyLong(), anyString(), anyString(), anyString(), anyString());
+        verify(countryRepository, never()).findByNameIgnoreCase(anyString());
+        verify(addressRepository, never()).save(any(Address.class));
+        verify(addressDtoConverter, never()).convert(address1);
+    }
+
+    @Test
+    @DisplayName("createAddress - Should throw EntityNotFoundException")
+    void testCreateAddress_ShouldThrowEntityNotFoundException_WhenUserNotFound() {
+        // Arrange
+        when(userRepository.findById(user.getId())).thenReturn(Optional.empty());
+
+        // Act & Assert
         assertThrows(EntityNotFoundException.class, () -> addressService.createAddress(cr));
         verify(userRepository, times(1)).findById(anyLong());
         verify(addressRepository, never())
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
                         anyLong(), anyString(), anyString(), anyString(), anyString());
+        verify(countryRepository, never()).findByNameIgnoreCase(anyString());
         verify(addressRepository, never()).save(any(Address.class));
         verify(addressDtoConverter, never()).convert(address1);
     }
@@ -213,41 +245,45 @@ class AddressServiceImplTest {
     @Test
     @DisplayName("createAddress - Should throw DuplicateEntityException")
     void testCreateAddress_ShouldThrowDuplicateEntityException_WhenDuplicateAddress() {
-        // Arrange & Act
+        // Arrange
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         when(addressRepository
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
                         anyLong(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(Optional.of(address1));
 
-        // Assert
+        // Act & Assert
         assertThrows(DuplicateEntityException.class, () -> addressService.createAddress(cr));
+
         verify(userRepository, times(1)).findById(anyLong());
         verify(addressRepository, times(1))
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
                         anyLong(), anyString(), anyString(), anyString(), anyString());
+        verify(countryRepository, never()).findByNameIgnoreCase(cr.getCountry());
         verify(addressRepository, never()).save(any(Address.class));
         verify(addressDtoConverter, never()).convert(address1);
     }
 
     @Test
-    @DisplayName("createAddress - Should throw InvalidEntityException")
-    void testCreateAddress_ShouldThrowInvalidEntityException_WhenErrorDuringCreation() {
-        // Arrange & Act
+    @DisplayName("createAddress - Should throw EntityNotFoundException")
+    void testCreateAddress_ShouldThrowEntityNotFoundException_WhenCountryNotFound() {
+        // Arrange
         when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
         when(addressRepository
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
                         anyLong(), anyString(), anyString(), anyString(), anyString()))
                 .thenReturn(Optional.empty());
-        when(addressRepository.save(any(Address.class))).thenThrow(new RuntimeException());
+        when(countryRepository.findByNameIgnoreCase(cr.getCountry())).thenReturn(Optional.empty());
 
-        // Assert
-        assertThrows(InvalidEntityException.class, () -> addressService.createAddress(cr));
+        // Act & Assert
+        assertThrows(EntityNotFoundException.class, () -> addressService.createAddress(cr));
+
         verify(userRepository, times(1)).findById(anyLong());
         verify(addressRepository, times(1))
                 .findByUserIdAndAddressLine1AndCityAndStateAndPostalCode(
                         anyLong(), anyString(), anyString(), anyString(), anyString());
-        verify(addressRepository, times(1)).save(any(Address.class));
+        verify(countryRepository, times(1)).findByNameIgnoreCase(cr.getCountry());
+        verify(addressRepository, never()).save(any(Address.class));
         verify(addressDtoConverter, never()).convert(address1);
     }
 
@@ -263,31 +299,64 @@ class AddressServiceImplTest {
         updatedAddress.setAddressLine1("Some New Street");
         updatedAddress.setCity("Queens");
         updatedAddress.setState("NY");
-        updatedAddress.setCountry("USA");
+        updatedAddress.setCountry(country);
         updatedAddress.setPostalCode("11428");
 
         AddressDto updatedAddressDto = new AddressDto();
-        updatedAddress.setId(1L);
-        updatedAddress.setAddressType(AddressType.ALTERNATE);
-        updatedAddress.setAddressLine1("Some New Street");
-        updatedAddress.setCity("Queens");
-        updatedAddress.setState("NY");
-        updatedAddress.setCountry("USA");
-        updatedAddress.setPostalCode("11428");
+        updatedAddressDto.setId(1L);
+        updatedAddressDto.setAddressType(AddressType.ALTERNATE);
+        updatedAddressDto.setAddressLine1("Some New Street");
+        updatedAddressDto.setCity("Queens");
+        updatedAddressDto.setState("NY");
+        updatedAddressDto.setCountry(country.getName());
+        updatedAddressDto.setPostalCode("11428");
 
         // Act
-        when(addressRepository.findById(anyLong())).thenReturn(Optional.of(address1));
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
+        when(addressRepository.findById(ur.getId())).thenReturn(Optional.of(address1));
         when(addressRepository.save(any(Address.class))).thenReturn(updatedAddress);
         when(addressDtoConverter.convert(any(Address.class))).thenReturn(updatedAddressDto);
 
         // Assert
         assertEquals(updatedAddressDto, addressService.updateAddress(ur));
+
         verify(addressRepository, times(1)).findById(anyLong());
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(countryRepository, never()).findByNameIgnoreCase(anyString());
         verify(addressRepository, times(1)).save(any(Address.class));
         verify(addressDtoConverter, times(1)).convert(any(Address.class));
 
+    }
+
+    @Test
+    @DisplayName("updateAddress - Should throw IllegalArgumentException")
+    void testUpdateAddress_ShouldThrowIllegalArgumentException_WhenNoAddressId() {
+        // Arrange
+        AddressUpdateRequest ur2 = new  AddressUpdateRequest();
+        ur2.setId(null);
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> addressService.updateAddress(ur2));
+
+        verify(addressRepository, never()).findById(anyLong());
+        verify(countryRepository, never()).findByNameIgnoreCase(anyString());
+        verify(addressRepository, never()).save(any(Address.class));
+        verify(addressDtoConverter, never()).convert(any(Address.class));
+    }
+
+    @Test
+    @DisplayName("updateAddress - Should throw IllegalArgumentException")
+    void testUpdateAddress_ShouldThrowIllegalArgumentException_WhenNoUserId() {
+        // Arrange
+        AddressUpdateRequest ur2 = new  AddressUpdateRequest();
+        ur2.setId(null);
+        ur2.setUserId(null);
+
+        // Act & Assert
+        assertThrows(IllegalArgumentException.class, () -> addressService.updateAddress(ur2));
+
+        verify(addressRepository, never()).findById(anyLong());
+        verify(countryRepository, never()).findByNameIgnoreCase(anyString());
+        verify(addressRepository, never()).save(any(Address.class));
+        verify(addressDtoConverter, never()).convert(any(Address.class));
     }
 
     @Test
@@ -300,23 +369,7 @@ class AddressServiceImplTest {
         assertThrows(EntityNotFoundException.class, () -> addressService.updateAddress(ur));
 
         verify(addressRepository, times(1)).findById(anyLong());
-        verify(userRepository, never()).findById(anyLong());
-        verify(addressRepository, never()).save(any(Address.class));
-        verify(addressDtoConverter, never()).convert(any(Address.class));
-    }
-
-    @Test
-    @DisplayName("updateAddress - Should throw EntityNotFoundException")
-    void testUpdateAddress_ShouldThrowEntityNotFoundException_WhenUserNotFound() {
-        // Arrange
-        when(addressRepository.findById(anyLong())).thenReturn(Optional.of(address1));
-        when(userRepository.findById(anyLong())).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThrows(EntityNotFoundException.class, () -> addressService.updateAddress(ur));
-
-        verify(addressRepository, times(1)).findById(anyLong());
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(countryRepository, never()).findByNameIgnoreCase(anyString());
         verify(addressRepository, never()).save(any(Address.class));
         verify(addressDtoConverter, never()).convert(any(Address.class));
     }
@@ -325,12 +378,11 @@ class AddressServiceImplTest {
     @DisplayName("updateAddress - Should throw EntityUpdateException")
     void testUpdateAddress_ShouldThrowEntityUpdateException_WhenAddressDoesNotBelongToUser() {
         // Arrange
-        address1.setUser(user);
         User user2 = new User();
         user2.setId(99L);
+        address1.setUser(user2);
 
         when(addressRepository.findById(anyLong())).thenReturn(Optional.of(address1));
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user2));
 
         // Act & Assert
         EntityUpdateException exception = assertThrows(
@@ -338,29 +390,33 @@ class AddressServiceImplTest {
                 () -> addressService.updateAddress(ur));
 
         verify(addressRepository, times(1)).findById(anyLong());
-        verify(userRepository, times(1)).findById(anyLong());
+        verify(countryRepository, never()).findByNameIgnoreCase(anyString());
         verify(addressRepository, never()).save(any(Address.class));
         verify(addressDtoConverter, never()).convert(any(Address.class));
     }
 
     @Test
-    @DisplayName("updateAddress - Should throw InvalidEntityException")
-    void testUpdateAddress_ShouldThrowInvalidEntityException_WhenError() {
+    @DisplayName("updateAddress - Should throw EntityNotFoundException")
+    void testUpdateAddress_ShouldEntityNotFoundException_WhenCountryNotFound() {
         // Arrange
+        Country country2 = new Country();
+        country2.setId(99L);
+        country2.setName("Some New Country");
+        ur.setCountry(country2.getName());
+
         address1.setUser(user);
 
         when(addressRepository.findById(anyLong())).thenReturn(Optional.of(address1));
-        when(userRepository.findById(anyLong())).thenReturn(Optional.of(user));
-        when(addressRepository.save(any(Address.class))).thenThrow(new RuntimeException());
+        when(countryRepository.findByNameIgnoreCase(country2.getName())).thenReturn(Optional.empty());
 
         // Act & Assert
-        InvalidEntityException exception = assertThrows(
-                InvalidEntityException.class,
+        EntityNotFoundException exception = assertThrows(
+                EntityNotFoundException.class,
                 () -> addressService.updateAddress(ur));
 
         verify(addressRepository, times(1)).findById(anyLong());
-        verify(userRepository, times(1)).findById(anyLong());
-        verify(addressRepository, times(1)).save(any(Address.class));
+        verify(countryRepository, times(1)).findByNameIgnoreCase(anyString());
+        verify(addressRepository, never()).save(any(Address.class));
         verify(addressDtoConverter, never()).convert(any(Address.class));
     }
 
