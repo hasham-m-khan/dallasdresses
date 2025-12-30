@@ -22,7 +22,7 @@ public class ItemUpdateRequest {
     private String summary;
     private BigDecimal price;
     private DiscountType discountType;
-    private Double discountAmount;
+    private Double discountValue;
     private Set<CategoryUpdateRequest> categories;
     private Set<ItemImageUpdateRequest> itemImages;
 }

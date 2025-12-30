@@ -33,7 +33,7 @@ public class ItemCreateRequest {
     private DiscountType discountType;
 
     @NotNull
-    private Double discountAmount;
+    private Double discountValue;
 
     private Set<CategoryCreateRequest> categories;
     private Set<ItemImageCreateRequest> itemImages;
