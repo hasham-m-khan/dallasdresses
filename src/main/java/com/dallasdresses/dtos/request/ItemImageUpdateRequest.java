@@ -1,6 +1,5 @@
 package com.dallasdresses.dtos.request;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,6 +18,8 @@ public class ItemImageUpdateRequest {
     @NotNull
     private Long itemId;
 
-    @NotBlank
     private String url;
+    private String altText;
+    private Integer displayOrder;
+    private Boolean isPrimary;
 }

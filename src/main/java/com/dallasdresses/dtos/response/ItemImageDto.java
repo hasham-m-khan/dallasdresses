@@ -14,4 +14,7 @@ public class ItemImageDto {
     private Long id;
     private Long itemId;
     private String url;
+    private String altText;
+    private Integer displayOrder;
+    private Boolean isPrimary;
 }
