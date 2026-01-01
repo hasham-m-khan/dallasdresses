@@ -1,8 +1,7 @@
 package com.dallasdresses.dtos.request;
 
 import com.dallasdresses.entities.enums.DiscountType;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
+import com.dallasdresses.entities.enums.DressSize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,10 +18,13 @@ public class ItemUpdateRequest {
 
     private String name;
     private String description;
-    private String summary;
+    private String color;
+    private DressSize size;
+    private Integer stock;
     private BigDecimal price;
     private DiscountType discountType;
     private Double discountValue;
-    private Set<CategoryUpdateRequest> categories;
+    private Long parentId;
+    private Set<String> categorySlugs;
     private Set<ItemImageUpdateRequest> itemImages;
 }
