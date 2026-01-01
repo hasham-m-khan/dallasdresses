@@ -25,4 +25,10 @@ public class ItemImage {
 
     @NotBlank
     private String url;
+
+    private String altText;
+
+    private Integer displayOrder;
+
+    private Boolean isPrimary;
 }
