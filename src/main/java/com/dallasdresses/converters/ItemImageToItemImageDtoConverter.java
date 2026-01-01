@@ -16,6 +16,9 @@ public class ItemImageToItemImageDtoConverter implements Converter<ItemImage, It
                 .id(source.getId())
                 .itemId(source.getItem().getId())
                 .url(source.getUrl())
+                .altText(source.getAltText())
+                .displayOrder(source.getDisplayOrder())
+                .isPrimary(source.getIsPrimary())
                 .build();
     }
 }
