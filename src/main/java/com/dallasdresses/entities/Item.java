@@ -45,7 +45,7 @@ public class Item {
 
     @NotNull
     @Min(0)
-    private Integer quantity;
+    private Integer stock;
 
     @NotNull
     private BigDecimal price;
@@ -93,6 +93,15 @@ public class Item {
         category.getItems().add(this);
     }
 
+    public void removeCategory(Category category) {
+        if (category != null) {
+            categories.remove(category);
+            if (category.getItems() != null) {
+                category.getItems().remove(this);
+            }
+        }
+    }
+
     public void addChild(Item child) {
         if (child != null && !child.equals(this)) {
             children.add(child);
@@ -111,7 +120,7 @@ public class Item {
         return children != null && !children.isEmpty();
     }
 
-    public boolean isVariant() {
+    public boolean isChild() {
         return parent != null;
     }
 }
