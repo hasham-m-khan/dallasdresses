@@ -59,36 +59,61 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public ItemDto createItem(ItemCreateRequest request) {
+        // Validate request
+        if (request == null) {
+            throw new InvalidEntityException("request cannot be null");
+        }
 
-        // Check if item already exists
-        if (itemRepository.existsByNameAndPriceAndDiscountType(
+        // Validate that at least one category exists
+        if (request.getCategorySlugs() == null || request.getCategorySlugs().isEmpty()) {
+            throw new InvalidEntityException("At least one category is required");
+        }
+
+        // Check for duplicates
+        if (itemRepository.existsByNameAndColorAndSize(
                 request.getName(),
-                request.getPrice(),
-                request.getDiscountType())) {
+                request.getColor(),
+                request.getSize())) {
             throw new DuplicateEntityException("item");
         }
 
-        // Create new item
+        // Handle parent item if this is a child
+        Item parent = null;
+        if (request.getParentId() != null) {
+            parent = itemRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "parent item", request.getParentId()));
+        }
+
+        // Build the item
         Item item = Item.builder()
                 .name(request.getName())
                 .description(request.getDescription())
-                .summary(request.getSummary())
+                .color(request.getColor())
+                .size(request.getSize())
+                .stock(request.getStock())
                 .price(request.getPrice())
                 .discountType(request.getDiscountType())
-                .discountAmount(request.getDiscountAmount())
+                .discountValue(request.getDiscountValue())
+                .parent(parent)
                 .build();
 
-        handleCategories(item, request.getCategories());
+        // Handle categories
+        handleCategories(item, request.getCategorySlugs());
+
+        // Handle images
         handleItemImages(item, request.getItemImages());
 
         // Save item
         Item savedItem = itemRepository.save(item);
+
         return itemDtoConverter.convert(savedItem);
     }
 
     @Override
     @Transactional
     public ItemDto updateItem(Long id, ItemUpdateRequest request) {
+        // Validate request
         if (request == null) {
             throw new InvalidEntityException("request body is null");
         }
@@ -97,46 +122,65 @@ public class ItemServiceImpl implements ItemService {
         Item existingItem = itemRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("item", id));
 
-        // Set fields
+        // Update basic fields
         updateExistingItemFields(existingItem, request);
 
+        // Handle category updates if applicable
+        if (request.getCategorySlugs() != null) {
+            handleCategoryUpdate(existingItem, request.getCategorySlugs());
+        }
+
+        // Handle image updates if applicable
+        if (request.getItemImages() != null) {
+            handleImageUpdate(existingItem, request.getItemImages());
+        }
+
+        // Save item
         Item savedItem = itemRepository.save(existingItem);
+
         return itemDtoConverter.convert(savedItem);
     }
 
     @Override
     @Transactional
     public void deleteItem(Long id) {
+        if (!itemRepository.existsById(id)) {
+            throw new EntityNotFoundException("item", id);
+        }
+
         itemRepository.deleteById(id);
     }
 
-    private void handleCategories(Item item, Set<CategoryCreateRequest> categoriesRequest) {
-        if (categoriesRequest == null || categoriesRequest.isEmpty()) {
-            return;
+    /**
+     * Validates that all categories exist and adds them to the item
+     */
+    private void handleCategories(Item item, Set<String> categorySlugs) {
+        if (categorySlugs == null || categorySlugs.isEmpty()) {
+            throw new InvalidEntityException("At least one category is required");
         }
 
-        Set<String> slugs = categoriesRequest.stream()
-                .map(CategoryCreateRequest::getSlug)
-                .collect(Collectors.toSet());
+        // Fetch categories by slugs
+        List<Category> categories = categoryRepository.findBySlugIn(categorySlugs);
 
-        Map<String, Category> existingCategories = categoryRepository
-                .findBySlugIn(slugs)
-                .stream()
-                .collect(Collectors.toMap(Category::getSlug, c -> c));
+        // Verify all categories exist
+        if (categories.size() != categorySlugs.size()) {
+            Set<String> foundSlugs = categories.stream()
+                    .map(Category::getSlug)
+                    .collect(Collectors.toSet());
 
-        categoriesRequest.forEach(catRequest -> {
-            Category category = existingCategories.computeIfAbsent(
-                    catRequest.getSlug(),
-                    slug -> Category.builder()
-                            .name(catRequest.getName())
-                            .slug(slug)
-                            .build()
-            );
+            Set<String> missingSlugs = new HashSet<>(categorySlugs);
+            missingSlugs.removeAll(foundSlugs);
 
-            item.addCategory(category);
-        });
+            throw new EntityNotFoundException("categories with slugs:" + missingSlugs);
+        }
+
+        // Add all categories to item
+        categories.forEach(item::addCategory);
     }
 
+    /**
+     * Handles item images during creation.
+     */
     private void handleItemImages(Item item, Set<ItemImageCreateRequest> imagesRequest) {
         if (imagesRequest == null || imagesRequest.isEmpty()) {
             return;
@@ -145,14 +189,19 @@ public class ItemServiceImpl implements ItemService {
         imagesRequest.forEach(imgRequest -> {
             ItemImage image = ItemImage.builder()
                     .url(imgRequest.getUrl())
+                    .altText(imgRequest.getAltText())
+                    .displayOrder(imgRequest.getDisplayOrder())
+                    .isPrimary(imgRequest.getIsPrimary())
                     .build();
 
             item.addImage(image);
         });
     }
 
+    /**
+     * Updates basic item fields (not relationships).
+     */
     private void updateExistingItemFields(Item existingItem, ItemUpdateRequest request) {
-
         if (request.getName() != null) {
             existingItem.setName(request.getName());
         }
@@ -161,8 +210,16 @@ public class ItemServiceImpl implements ItemService {
             existingItem.setDescription(request.getDescription());
         }
 
-        if (request.getSummary() != null) {
-            existingItem.setSummary(request.getSummary());
+        if (request.getColor() != null) {
+            existingItem.setColor(request.getColor());
+        }
+
+        if (request.getSize() != null) {
+            existingItem.setSize(request.getSize());
+        }
+
+        if (request.getStock() != null) {
+            existingItem.setStock(request.getStock());
         }
 
         if (request.getPrice() != null) {
@@ -173,54 +230,86 @@ public class ItemServiceImpl implements ItemService {
             existingItem.setDiscountType(request.getDiscountType());
         }
 
-        if (request.getDiscountAmount() != null) {
-            existingItem.setDiscountAmount(request.getDiscountAmount());
+        if (request.getDiscountValue() != null) {
+            existingItem.setDiscountValue(request.getDiscountValue());
         }
 
-        if (request.getCategories() != null) {
-            handleCategoryUpdate(existingItem, request.getCategories());
-        }
+        // Handle parent change (be careful with this!)
+        if (request.getParentId() != null) {
+            if (request.getParentId().equals(existingItem.getId())) {
+                throw new InvalidEntityException("Item cannot be its own parent");
+            }
 
-        if (request.getItemImages() != null) {
-            handleImageUpdate(existingItem, request.getItemImages());
+            if (!request.getParentId().equals(existingItem.getParent().getId())) {
+                Item newParent = itemRepository.findById(request.getParentId())
+                        .orElseThrow(() -> new EntityNotFoundException("parent item", request.getParentId()));
+                existingItem.setParent(newParent);
+            }
         }
     }
 
-    private void handleCategoryUpdate(Item item, Set<CategoryUpdateRequest> categoryRequests) {
-        Set<String> slugs = categoryRequests.stream()
-                .map(CategoryUpdateRequest::getSlug)
-                .collect(Collectors.toSet());
+    /**
+     * Updates item categories - replaces all existing categories.
+     */
+    private void handleCategoryUpdate(Item item, Set<String> categorySlugs) {
+        if (categorySlugs == null || categorySlugs.isEmpty()) {
+            throw new InvalidEntityException("At least one category is required");
+        }
 
-        Map<String, Category> existingCategories = categoryRepository
-                .findBySlugIn(slugs)
-                .stream()
+        // Fetch categories by slug
+        List<Category> categories = categoryRepository.findBySlugIn(categorySlugs);
+
+        // Verify that all the categories exist
+        if (categories.size() != categorySlugs.size()) {
+            Set<String> foundSlugs = categories.stream()
+                    .map(Category::getSlug)
+                    .collect(Collectors.toSet());
+
+            Set<String> missingSlugs = new HashSet<>(categorySlugs);
+            missingSlugs.removeAll(foundSlugs);
+
+            throw new EntityNotFoundException("categories with slugs:" + missingSlugs);
+        }
+
+        // Create map for lookup
+        Map<String, Category> categoryMap = categories.stream()
                 .collect(Collectors.toMap(Category::getSlug, c -> c));
 
-        item.getCategories().clear();
+        // Clear existing categories
+        Set<Category> existingCategories = new HashSet<>(item.getCategories());
+        existingCategories.forEach(item::removeCategory);
 
-        categoryRequests.forEach(catRequest -> {
-            Category category = existingCategories.computeIfAbsent(
-                    catRequest.getSlug(),
-                    slug -> categoryRepository.save(Category.builder()
-                            .name(catRequest.getName())
-                            .slug(slug)
-                            .build())
-            );
+        // Add new categories
+        categorySlugs.forEach(slug -> {
+            Category category = categoryMap.get(slug);
 
-            item.addCategory(category);
+            if (category != null) {
+                item.addCategory(category);
+            }
         });
     }
 
+    /**
+     * Updates item images - replaces all existing images.
+     * WARNING: Setting ID on new entities can cause issues!
+     */
     private void handleImageUpdate(Item item, Set<ItemImageUpdateRequest> imageRequests) {
+        // Clear existing images
         item.getItemImages().clear();
 
         // Add new images for this item
-        imageRequests.forEach(imgRequest -> {
-            ItemImage image = ItemImage.builder()
-                    .url(imgRequest.getUrl())
-                    .build();
+        if (imageRequests != null && !imageRequests.isEmpty()) {
+            imageRequests.forEach(imgRequest -> {
+                ItemImage image = ItemImage.builder()
+                        // .id(imgRequest.getId())
+                        .url(imgRequest.getUrl())
+                        .altText(imgRequest.getAltText())
+                        .displayOrder(imgRequest.getDisplayOrder())
+                        .isPrimary(imgRequest.getIsPrimary())
+                        .build();
 
-            item.addImage(image);
-        });
+                item.addImage(image);
+            });
+        }
     }
 }
