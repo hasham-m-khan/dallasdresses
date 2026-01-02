@@ -5,7 +5,7 @@ import com.dallasdresses.dtos.request.*;
 import com.dallasdresses.dtos.response.ItemDto;
 import com.dallasdresses.entities.Category;
 import com.dallasdresses.entities.Item;
-import com.dallasdresses.entities.enums.DiscountType;
+import com.dallasdresses.entities.enums.DressSize;
 import com.dallasdresses.exceptions.DuplicateEntityException;
 import com.dallasdresses.exceptions.EntityNotFoundException;
 import com.dallasdresses.repositories.CategoryRepository;
@@ -40,6 +40,7 @@ class ItemServiceImplTest {
     @InjectMocks
     ItemServiceImpl itemService;
 
+    Item parent;
     Item item1;
     Item item2;
     ItemDto itemDto1;
@@ -47,44 +48,48 @@ class ItemServiceImplTest {
 
     @BeforeEach
     void setUp() {
+        parent = Item.builder()
+                .id(5L)
+                .name("Item0")
+                .color("Color0")
+                .size(DressSize.XS)
+                .price(new BigDecimal("33.99"))
+                .build();
+
         item1 = Item.builder()
                 .id(1L)
                 .name("Item1")
-                .description("Item1")
-                .summary("Item1")
+                .color("Color1")
+                .size(DressSize.MD)
                 .price(new BigDecimal("33.99"))
-                .discountType(DiscountType.FIXED)
-                .discountAmount(10.00)
+                .parent(parent)
                 .build();
 
         item2 = Item.builder()
                 .id(2L)
                 .name("Item2")
-                .description("Item2")
-                .summary("Item2")
-                .price(new BigDecimal("12.99"))
-                .discountType(DiscountType.PERCENTAGE)
-                .discountAmount(5.0)
+                .color("Color2")
+                .size(DressSize.LG)
+                .price(new BigDecimal("45.99"))
+                .parent(parent)
                 .build();
 
         itemDto1 = ItemDto.builder()
-                .id(1L)
-                .name("Item1")
-                .description("Item1")
-                .summary("Item1")
-                .price(new BigDecimal("33.99"))
-                .discountType(DiscountType.FIXED)
-                .discountAmount(10.00)
+                .id(item1.getId())
+                .name(item1.getName())
+                .color(item1.getColor())
+                .size(item1.getSize())
+                .price(item1.getPrice())
+                .parentId(item1.getParent().getId())
                 .build();
 
         itemDto2 = ItemDto.builder()
-                .id(2L)
-                .name("Item2")
-                .description("Item2")
-                .summary("Item2")
-                .price(new BigDecimal("12.99"))
-                .discountType(DiscountType.PERCENTAGE)
-                .discountAmount(5.0)
+                .id(item2.getId())
+                .name(item2.getName())
+                .color(item2.getColor())
+                .size(item2.getSize())
+                .price(item2.getPrice())
+                .parentId(item2.getParent().getId())
                 .build();
 
     }
@@ -171,14 +176,7 @@ class ItemServiceImplTest {
     @DisplayName("createItem - Should create item - When No error")
     void testCreateItem_ShouldCreateItem_WhenNoError() {
         // Arrange
-        CategoryCreateRequest requestCat1 = CategoryCreateRequest.builder()
-                .name("Category1").slug("slug1").build();
-        CategoryCreateRequest requestCat2 = CategoryCreateRequest.builder()
-                .name("Category2").slug("slug2").build();
-
-        Set<CategoryCreateRequest> categoriesRequest = new HashSet<>();
-        categoriesRequest.add(requestCat1);
-        categoriesRequest.add(requestCat2);
+        Set<String> categorySlugs = new HashSet<>(Arrays.asList("slug1", "slug2"));
 
         Category category1 = Category.builder()
                 .id(1L)
@@ -186,6 +184,7 @@ class ItemServiceImplTest {
                 .slug("slug1")
                 .items(new HashSet<>())
                 .build();
+
         Category category2 = Category.builder()
                 .id(2L)
                 .name("Category2")
@@ -205,20 +204,19 @@ class ItemServiceImplTest {
 
         ItemCreateRequest requestItem1  = ItemCreateRequest.builder()
                 .name(item1.getName())
-                .description(item1.getDescription())
-                .summary(item1.getSummary())
-                .price(item1.getPrice())
-                .discountType(item1.getDiscountType())
-                .discountAmount(item1.getDiscountAmount())
-                .categories(categoriesRequest)
+                .color(item1.getColor())
+                .size(item1.getSize())
+                .categorySlugs(categorySlugs)
                 .itemImages(imagesRequest)
+                .parentId(parent.getId())
                 .build();
 
-        when(itemRepository.existsByNameAndPriceAndDiscountType(
+        when(itemRepository.existsByNameAndColorAndSize(
                 requestItem1.getName(),
-                requestItem1.getPrice(),
-                requestItem1.getDiscountType()))
+                requestItem1.getColor(),
+                requestItem1.getSize()))
             .thenReturn(false);
+        when(itemRepository.findById(parent.getId())).thenReturn(Optional.of(parent));
         when(categoryRepository.findBySlugIn(any())).thenReturn(existingCategories);
         when(itemRepository.save(any(Item.class))).thenReturn(item1);
         when(itemDtoConverter.convert(item1)).thenReturn(itemDto1);
@@ -230,8 +228,9 @@ class ItemServiceImplTest {
         // Assert
         assertEquals(itemDto1, result);
 
-        verify(itemRepository, times(1)).existsByNameAndPriceAndDiscountType(
-                anyString(), any(BigDecimal.class), any(DiscountType.class));
+        verify(itemRepository, times(1)).existsByNameAndColorAndSize(
+                anyString(), anyString(), any());
+        verify(itemRepository, times(1)).findById(parent.getId());
         verify(categoryRepository, times(1)).findBySlugIn(any());
         verify(itemRepository, times(1)).save(any(Item.class));
         verify(itemDtoConverter, times(1)).convert(any(Item.class));
@@ -244,20 +243,23 @@ class ItemServiceImplTest {
 
         ItemCreateRequest requestItem1  = ItemCreateRequest.builder()
                 .name(item1.getName())
+                .color(item1.getColor())
+                .size(item1.getSize())
                 .price(item1.getPrice())
-                .discountType(item1.getDiscountType())
+                .categorySlugs(new HashSet<>(Arrays.asList("slug1", "slug2")))
                 .build();
 
-        when(itemRepository.existsByNameAndPriceAndDiscountType(
+        when(itemRepository.existsByNameAndColorAndSize(
                 requestItem1.getName(),
-                requestItem1.getPrice(),
-                requestItem1.getDiscountType()))
+                requestItem1.getColor(),
+                requestItem1.getSize()))
                 .thenReturn(true);
 
         // Act & Assert
         assertThrows(DuplicateEntityException.class, () -> itemService.createItem(requestItem1));
-        verify(itemRepository, times(1)).existsByNameAndPriceAndDiscountType(
-                anyString(), any(BigDecimal.class), any(DiscountType.class));
+
+        verify(itemRepository, times(1)).existsByNameAndColorAndSize(
+                anyString(), anyString(), any(DressSize.class));
         verify(itemRepository, never()).findById(anyLong());
         verify(categoryRepository, never()).findBySlugIn(any());
         verify(itemRepository, never()).save(any(Item.class));
@@ -268,26 +270,24 @@ class ItemServiceImplTest {
     @DisplayName("updateItem - Should update item - When no error")
     void testUpdateItem_ShouldUpdateItem_WhenNoError() {
         // Arrange
+        Set<String> categorySlugs = new HashSet<>(Arrays.asList("slug1", "slug2"));
+
         CategoryUpdateRequest requestCat1 = CategoryUpdateRequest.builder()
                 .name("Category1").slug("slug1").build();
         CategoryUpdateRequest requestCat2 = CategoryUpdateRequest.builder()
                 .name("Category2").slug("slug2").build();
 
-        Set<CategoryUpdateRequest> categoriesRequest = new HashSet<>();
-        categoriesRequest.add(requestCat1);
-        categoriesRequest.add(requestCat2);
-
-        Category category1Req = Category.builder()
+        Category category1 = Category.builder()
                 .id(1L)
                 .name("Category1")
                 .slug("slug1")
                 .build();
-        Category category2Req = Category.builder()
+        Category category2 = Category.builder()
                 .id(2L)
                 .name("Category2")
                 .slug("slug2")
                 .build();
-        Set<Category> categories = new HashSet<>(Arrays.asList(category1Req, category2Req));
+        Set<Category> categories = new HashSet<>(Arrays.asList(category1, category2));
         item1.setCategories(categories);
 
         ItemImageUpdateRequest requestImg1 = ItemImageUpdateRequest.builder()
@@ -302,17 +302,16 @@ class ItemServiceImplTest {
         ItemUpdateRequest request = ItemUpdateRequest.builder()
                 .name(item1.getName())
                 .description(item1.getDescription())
-                .summary(item1.getSummary())
                 .price(item1.getPrice())
                 .discountType(item1.getDiscountType())
-                .discountAmount(item1.getDiscountAmount())
+                .discountValue(item1.getDiscountValue())
                 .itemImages(imagesRequest)
-                .categories(categoriesRequest)
+                .categorySlugs(categorySlugs)
+                .parentId(item1.getParent().getId())
                 .build();
 
-        when(categoryRepository.findBySlugIn(any())).thenReturn(new ArrayList<>(categories));
-
         when(itemRepository.findById(item1.getId())).thenReturn(Optional.of(item1));
+        when(categoryRepository.findBySlugIn(any())).thenReturn(new ArrayList<>(categories));
         when(itemRepository.save(any(Item.class))).thenReturn(item1);
         when(itemDtoConverter.convert(item1)).thenReturn(itemDto1);
 
