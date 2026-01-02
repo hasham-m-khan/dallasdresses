@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 
@@ -30,4 +31,6 @@ public class ItemDto {
     private List<ItemDto> children;
     private Set<CategoryDto> categories;
     private Set<ItemImageDto> itemImages;
+    private Timestamp createdAt;
+    private Timestamp updatedAt;
 }
