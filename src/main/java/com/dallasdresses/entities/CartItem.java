@@ -13,27 +13,28 @@ import java.sql.Timestamp;
 @Entity
 public class CartItem {
 
-    @EmbeddedId
-    private CartItemId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-    @ManyToOne
-    @MapsId("cartId")
-    @JoinColumn(name = "cart_id")
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "cart_id", nullable = false)
     private Cart cart;
 
-    @ManyToOne
-    @MapsId("itemId")
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "item_id", nullable = false)
     private Item item;
-
-    @NotNull
-    @PositiveOrZero
-    private BigDecimal price;
 
     @NotNull
     @Min(1)
     @Max(10)
     private Integer quantity;
+
+    // Price at the time of adding to cart (for price history)
+    @NotNull
+    @PositiveOrZero
+    private BigDecimal priceAtAdd;
+
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
