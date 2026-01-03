@@ -27,11 +27,14 @@ public class ItemDto {
     private BigDecimal price;
     private DiscountType discountType;
     private Double discountValue;
+    private Double averageRating;
+    private Integer totalRatings;
     private Long parentId;
     private Boolean isParent;
-    private List<ItemDto> children;
     private Set<CategoryDto> categories;
     private Set<ItemImageDto> itemImages;
+    private List<ItemDto> children;
+
     private Timestamp createdAt;
     private Timestamp updatedAt;
 }

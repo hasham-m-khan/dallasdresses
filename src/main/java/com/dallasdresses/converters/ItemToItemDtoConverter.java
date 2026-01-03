@@ -44,6 +44,8 @@ public class ItemToItemDtoConverter implements Converter<Item, ItemDto> {
                 .price(source.getPrice())
                 .discountType(source.getDiscountType())
                 .discountValue(source.getDiscountValue())
+                .averageRating(source.getAverageRating())
+                .totalRatings(source.getTotalRatings())
                 .parentId(source.getParent() != null ? source.getParent().getId() : null)
                 .isParent(source.isParent())
                 .children(children)
