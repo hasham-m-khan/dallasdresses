@@ -53,6 +53,12 @@ public class ItemServiceImpl implements ItemService {
         Item item = itemRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("item", id));
 
+        if (item.getIsParent()) {
+            List<Item> children = itemRepository.findAllByParentId(item.getId());
+
+            children.forEach(item::addChild);
+        }
+
         return itemDtoConverter.convert(item);
     }
 
@@ -96,6 +102,7 @@ public class ItemServiceImpl implements ItemService {
                 .discountType(request.getDiscountType())
                 .discountValue(request.getDiscountValue())
                 .parent(parent)
+                .isParent(request.getIsParent())
                 .build();
 
         // Handle categories
@@ -245,6 +252,10 @@ public class ItemServiceImpl implements ItemService {
                         .orElseThrow(() -> new EntityNotFoundException("parent item", request.getParentId()));
                 existingItem.setParent(newParent);
             }
+        }
+
+        if (request.getIsParent() != null) {
+            existingItem.setIsParent(request.getIsParent());
         }
     }
 
