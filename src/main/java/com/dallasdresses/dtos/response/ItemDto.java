@@ -28,6 +28,7 @@ public class ItemDto {
     private DiscountType discountType;
     private Double discountValue;
     private Long parentId;
+    private Boolean isParent;
     private List<ItemDto> children;
     private Set<CategoryDto> categories;
     private Set<ItemImageDto> itemImages;
