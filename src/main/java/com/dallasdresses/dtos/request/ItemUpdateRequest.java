@@ -25,6 +25,7 @@ public class ItemUpdateRequest {
     private DiscountType discountType;
     private Double discountValue;
     private Long parentId;
+    private Boolean isParent;
     private Set<String> categorySlugs;
     private Set<ItemImageUpdateRequest> itemImages;
 }
