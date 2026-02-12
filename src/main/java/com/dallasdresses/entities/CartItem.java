@@ -43,4 +43,8 @@ public class CartItem {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private Timestamp updatedAt;
+
+    public BigDecimal getSubtotal() {
+        return this.priceAtAdd.multiply(BigDecimal.valueOf(quantity));
+    }
 }
