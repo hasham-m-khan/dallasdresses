@@ -2,6 +2,7 @@ package com.dallasdresses.services;
 
 import com.dallasdresses.converters.CartToCartDtoConverter;
 import com.dallasdresses.dtos.request.AddToCartRequest;
+import com.dallasdresses.dtos.request.CartItemRemoveRequest;
 import com.dallasdresses.dtos.request.CartItemUpdateRequest;
 import com.dallasdresses.dtos.response.CartDto;
 import com.dallasdresses.entities.Cart;
@@ -69,18 +70,71 @@ public class CartServiceImpl implements CartService {
     }
 
     @Override
+    @Transactional
     public CartDto updateCartItem(CartItemUpdateRequest request) {
-        return null;
+        // Validate and get cart item
+        CartItem cartItem = cartItemRepository.findById(request.getCartItemId())
+                .orElseThrow(() -> new EntityNotFoundException("cart item", request.getCartItemId()));
+
+        // Verify ownership
+        if (!cartItem.getCart().getUser().getId().equals(request.getUserId())) {
+            throw new InvalidEntityException(("Cart item does not belong to user"));
+        }
+
+        // Validate new quantity
+        validateQuantity(cartItem.getItem(), request.getQuantity());
+
+        // Update quantity
+        int oldQuantity = cartItem.getQuantity();
+        cartItem.setQuantity(request.getQuantity());
+
+        // Save and return
+        Cart savedCart = cartRepository.save(cartItem.getCart());
+
+        return cartConverter.convert(savedCart);
     }
 
     @Override
-    public CartDto removeFromCart(Long cartItemId, Long userId) {
-        return null;
+    @Transactional
+    public CartDto removeFromCart(CartItemRemoveRequest request) {
+        // Validate and get cart item
+        CartItem cartItem = cartItemRepository.findById(request.getCartItemId())
+                .orElseThrow(() -> new EntityNotFoundException("cart item", request.getCartItemId()));
+
+        Cart cart = cartItem.getCart();
+        User user = cart.getUser();
+
+        // Verify ownership
+        if (!user.getId().equals(request.getUserId())) {
+            throw new InvalidEntityException(("Cart item does not belong to user"));
+        }
+
+        // Remove cart item from cart
+        cart.removeItem(cartItem);
+
+        // Delete cart item
+        cartItemRepository.delete(cartItem);
+
+        // Save and return cart
+        Cart savedCart = cartRepository.save(cart);
+        return cartConverter.convert(savedCart);
     }
 
     @Override
     public void clearCart(Long userId) {
+        // Get cart with items
+        Cart cart = cartRepository.findByUserIdWithItems(userId)
+                .orElseThrow(() -> new EntityNotFoundException("cart for user", userId));
 
+        // Check if cart is already empty
+        if (cart.getItems().isEmpty()) {
+            throw new RuntimeException("cart is already empty");
+        }
+
+        // Clear all items
+        cart.clearItems();
+
+        cartRepository.save(cart);
     }
 
     private Item getAvailableItem(Long itemId) {
@@ -164,5 +218,23 @@ public class CartServiceImpl implements CartService {
         }
     }
 
+    private void validateQuantity(Item item, Integer quantity) {
+        if (quantity <= 0) {
+            throw new InvalidEntityException("quantity must be greater than 0");
+        }
 
+        if (quantity >item.getStock()) {
+            throw new InvalidEntityException(
+                    String.format(
+                            "Insufficient stock for item '%s'. Requested: %d, Available: %d",
+                            item.getName(), quantity, item.getStock()));
+        }
+
+        if (quantity > MAX_QUANTITY_PER_ITEM) {
+            throw new InvalidEntityException(
+                    String.format(
+                            "Cannot add more than %d units of the same item"
+                    , MAX_QUANTITY_PER_ITEM));
+        }
+    }
 }
