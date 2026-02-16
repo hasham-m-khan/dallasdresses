@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class CartItemUpdateRequest {
 
-    @NotNull(message = "cart item id is required")
+    // @NotNull(message = "cart item id is required")
     private Long cartItemId;
 
     @NotNull(message = "user id is required")
