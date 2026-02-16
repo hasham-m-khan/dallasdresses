@@ -23,6 +23,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.math.BigDecimal;
 import java.util.Optional;
@@ -140,6 +141,9 @@ class CartServiceImplTest {
 
         @BeforeEach
         void setUp() {
+            ReflectionTestUtils.setField(cartService, "MAX_CART_ITEMS", 50);
+            ReflectionTestUtils.setField(cartService, "MAX_QUANTITY_PER_ITEM", 10);
+
             addRequest = AddToCartRequest.builder()
                     .userId(USER_ID)
                     .itemId(ITEM_ID)
@@ -278,6 +282,9 @@ class CartServiceImplTest {
 
         @BeforeEach
         void setUp() {
+            ReflectionTestUtils.setField(cartService, "MAX_CART_ITEMS", 50);
+            ReflectionTestUtils.setField(cartService, "MAX_QUANTITY_PER_ITEM", 10);
+
             updateRequest = CartItemUpdateRequest.builder()
                     .cartItemId(CART_ITEM_ID)
                     .userId(USER_ID)
