@@ -260,7 +260,7 @@ INSERT INTO item_image (URL, ALT_TEXT, ITEM_ID, DISPLAY_ORDER, IS_PRIMARY) VALUE
 INSERT INTO item_ratings (ITEM_ID, USER_ID, RATING, TITLE, REVIEW_TEXT, VERIFIED_PURCHASE, HELPFUL_VOTES) VALUES
     -- Item 1: Zinc Shisha Work Frock (avg 4.5, 12 ratings)
     (1, 1, 5, 'Absolutely stunning!', 'The shisha work is beautiful and the fabric quality is excellent. Got so many compliments!', true, 15),
-    (1, 3, 5, 'Perfect for my event', 'Wore this to a wedding and felt like a princess. Highly recommend!', true, 8),
+    (1, 3, 5, 'Perfect for my ev ent', 'Wore this to a wedding and felt like a princess. Highly recommend!', true, 8),
     (1, 4, 4, 'Beautiful but runs small', 'Gorgeous dress but I had to exchange for a larger size. Make sure to check measurements.', true, 12),
     (1, 5, 5, 'Worth every penny', 'The embroidery detail is incredible. This is now my favorite dress!', true, 6),
     (1, 6, 4, 'Great quality', 'Very well made. The only reason for 4 stars is the price is a bit high.', false, 3),
@@ -308,3 +308,21 @@ INSERT INTO item_ratings (ITEM_ID, USER_ID, RATING, TITLE, REVIEW_TEXT, VERIFIED
     (18, 5, 5, 'Absolutely perfect', 'Every detail is perfect. The burgundy color is regal and the work is intricate.', true, 48),
     (18, 6, 5, 'Best bridal wear', 'I''ve never seen such beautiful craftsmanship. Worth every penny!', true, 52),
     (18, 10, 5, 'Stunning!', 'This is the most beautiful thing I''ve ever owned. Made my wedding unforgettable.', true, 60);
+
+-- ============================================================================
+-- CARTS TABLE
+-- ============================================================================
+INSERT INTO carts (USER_ID, CREATED_AT, UPDATED_AT) VALUES
+(1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- ============================================================================
+-- CARTS ITEMS TABLE
+-- ============================================================================
+INSERT INTO cart_item (CART_ID, ITEM_ID, QUANTITY, PRICE_AT_ADD, CREATED_AT, UPDATED_AT) VALUES
+(1, 1, 2, 67.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(1, 2, 1, 59.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(1, 3, 1, 62.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(2, 4, 2, 52.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(2, 6, 1, 89.00, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
