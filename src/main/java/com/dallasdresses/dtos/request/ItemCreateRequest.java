@@ -48,6 +48,9 @@ public class ItemCreateRequest {
 
     private Long parentId;
 
+    @NotNull
+    private Boolean isParent;
+
     @NotEmpty(message = "At least one category is required")
     private Set<String> categorySlugs;
 

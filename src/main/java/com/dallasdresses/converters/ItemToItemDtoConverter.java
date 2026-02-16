@@ -6,7 +6,9 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
@@ -23,6 +25,15 @@ public class ItemToItemDtoConverter implements Converter<Item, ItemDto> {
 
     @Override
     public ItemDto convert(@NonNull Item source) {
+
+        List<ItemDto> children = new ArrayList<>();
+        if (source.getChildren() != null && !source.getChildren().isEmpty()) {
+            source.getChildren().forEach(child -> {
+               ItemDto childDto = convert(child);
+               children.add(childDto);
+            });
+        }
+
         return ItemDto.builder()
                 .id(source.getId())
                 .name(source.getName())
@@ -33,7 +44,11 @@ public class ItemToItemDtoConverter implements Converter<Item, ItemDto> {
                 .price(source.getPrice())
                 .discountType(source.getDiscountType())
                 .discountValue(source.getDiscountValue())
+                .averageRating(source.getAverageRating())
+                .totalRatings(source.getTotalRatings())
                 .parentId(source.getParent() != null ? source.getParent().getId() : null)
+                .isParent(source.isParent())
+                .children(children)
                 .categories(source.getCategories() != null
                         ? source.getCategories().stream()
                             .map(categoryDtoConverter::convert)

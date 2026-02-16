@@ -50,11 +50,26 @@ public class Item {
     @NotNull
     private BigDecimal price;
 
+    @Builder.Default
+    @Column(nullable = false)
+    private Double averageRating = 0.0;
+
+    @Builder.Default
+    @Column(nullable = false)
+    private Integer totalRatings = 0;
+
+    @Builder.Default
+    @OneToMany(mappedBy = "item", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<ItemRating> ratings = new HashSet<>();
+
     @Enumerated(EnumType.STRING)
     private DiscountType discountType;
 
     @Min(0)
     private Double discountValue;
+
+    @NotNull
+    private Boolean isParent;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
@@ -116,11 +131,57 @@ public class Item {
         }
     }
 
+    /**
+     * Check if item is a parent
+     */
     public boolean isParent() {
         return children != null && !children.isEmpty();
     }
 
+    /**
+     * Check if item is a child
+     */
     public boolean isChild() {
         return parent != null;
+    }
+
+    /**
+     * Add a rating and update aggregates.
+     */
+    public void addRating(ItemRating rating) {
+        if (rating != null) {
+            ratings.add(rating);
+            rating.setItem(this);
+            updateRatingAggregates();
+        }
+    }
+
+    /**
+     * Remove a rating and update aggregates.
+     */
+    public void removeRating(ItemRating rating) {
+        if (rating != null) {
+            ratings.remove(rating);
+            rating.setItem(null);
+            updateRatingAggregates();
+        }
+    }
+
+    /**
+     * Recalculates average rating and total count.
+     * Call this after adding/removing/updating ratings.
+     */
+    public void updateRatingAggregates() {
+        if (ratings == null || ratings.isEmpty()) {
+            this.averageRating = 0.0;
+            this.totalRatings = 0;
+            return;
+        }
+
+        this.totalRatings = ratings.size();
+        this.averageRating = ratings.stream()
+                .mapToInt(ItemRating::getRating)
+                .average()
+                .orElse(0.0);
     }
 }

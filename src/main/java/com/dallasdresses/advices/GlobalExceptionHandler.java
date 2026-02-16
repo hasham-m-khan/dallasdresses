@@ -5,6 +5,7 @@ import com.dallasdresses.exceptions.EntityNotFoundException;
 import com.dallasdresses.exceptions.InvalidEntityException;
 import com.dallasdresses.dtos.common.ApiResponse;
 import com.dallasdresses.dtos.common.ErrorResponse;
+import com.dallasdresses.exceptions.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -148,6 +149,26 @@ public class GlobalExceptionHandler {
                 message,
                 HttpStatus.BAD_REQUEST,
                 "Invalid entity",
+                request,
+                errors,
+                false
+        ).createResponse();
+    }
+
+    @ExceptionHandler({UnauthorizedException.class})
+    public ResponseEntity<ApiResponse<Object>> handleUnauthorizedException(
+            UnauthorizedException ex,
+            HttpServletRequest request
+    ) {
+        log.error("🥊 Unauthorized exception: {}", ex.getMessage());
+
+        String message = "Unauthorized exception";
+        List<String> errors = new ArrayList<>();
+
+        return new ErrorResponse(
+                message,
+                HttpStatus.BAD_REQUEST,
+                "Unauthorized exception",
                 request,
                 errors,
                 false
