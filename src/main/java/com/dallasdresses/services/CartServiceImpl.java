@@ -17,6 +17,7 @@ import com.dallasdresses.repositories.ItemRepository;
 import com.dallasdresses.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,8 +35,11 @@ public class CartServiceImpl implements CartService {
     private final CartItemRepository cartItemRepository;
     private final CartToCartDtoConverter cartConverter;
 
-    private static final int MAX_CART_ITEMS = 50;
-    private static final int MAX_QUANTITY_PER_ITEM = 10;
+    @Value("${app.cart.max-items:50}")
+    private int MAX_CART_ITEMS;
+
+    @Value("${app.cart.max-quantity-per-item:10}")
+    private int MAX_QUANTITY_PER_ITEM;
 
     @Override
     public CartDto getCartByUserId(Long userId) {
@@ -128,7 +132,7 @@ public class CartServiceImpl implements CartService {
 
         // Check if cart is already empty
         if (cart.getItems().isEmpty()) {
-            throw new RuntimeException("cart is already empty");
+            throw new InvalidEntityException("cart is already empty");
         }
 
         // Clear all items
